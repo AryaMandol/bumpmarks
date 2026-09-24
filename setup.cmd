@@ -1,6 +1,6 @@
 @echo off
 setlocal
-cd /d "D:\Arya\Dev\bumpmarks"
+cd /d "%~dp0"
 
 echo.
 echo ============================================
@@ -17,12 +17,7 @@ if errorlevel 1 (
 
 echo Installing dependencies...
 python -m pip install -r requirements.txt
-
-if errorlevel 1 (
-    echo.
-    echo ERROR: Dependency installation failed.
-    exit /b 1
-)
+if errorlevel 1 exit /b 1
 
 echo.
 echo Setup complete.
@@ -31,5 +26,4 @@ echo Next:
 echo   test.cmd
 echo   python app.py
 echo.
-
 endlocal

@@ -1,6 +1,9 @@
-from flask import Flask, render_template, send_from_directory
+from pathlib import Path
+
+from flask import Flask, jsonify, render_template, send_from_directory
 
 app = Flask(__name__)
+VERSION = (Path(__file__).with_name("VERSION").read_text(encoding="utf-8").strip())
 
 
 @app.after_request
@@ -43,6 +46,11 @@ def index():
 @app.route("/offline")
 def offline():
     return render_template("offline.html")
+
+
+@app.route("/healthz")
+def healthz():
+    return jsonify(status="ok", app="BumpMarks", version=VERSION)
 
 
 @app.route("/sw.js")

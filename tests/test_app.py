@@ -270,7 +270,7 @@ def test_update_banner_is_present():
 def test_service_worker_has_offline_and_update_handling():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v10";' in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v11";' in service_worker
     assert '"/offline"' in service_worker
     assert 'event.request.mode === "navigate"' in service_worker
     assert '"SKIP_WAITING"' in service_worker
@@ -519,3 +519,60 @@ def test_service_worker_caches_landing_and_app_assets():
 def test_landing_images_exist_locally():
     assert (ROOT / "static" / "images" / "landing-mother-window.png").exists()
     assert (ROOT / "static" / "images" / "landing-mother-phone.png").exists()
+
+
+def test_health_endpoint_reports_release_version():
+    client = app.test_client()
+
+    response = client.get("/healthz")
+
+    assert response.status_code == 200
+    assert response.json["status"] == "ok"
+    assert response.json["app"] == "BumpMarks"
+    assert response.json["version"] == "1.0.0"
+
+
+def test_release_files_are_present():
+    required = [
+        "VERSION",
+        "LICENSE",
+        "ASSETS.md",
+        "CONTRIBUTING.md",
+        "SECURITY.md",
+        "CHANGELOG.md",
+        "DEPLOYMENT.md",
+        "render.yaml",
+        "build_static.py",
+        "verify_release.py",
+        "verify_production.py",
+        "verify_production.cmd",
+        ".github/workflows/ci.yml",
+        ".github/workflows/release.yml",
+    ]
+
+    for relative in required:
+        assert (ROOT / relative).exists(), relative
+
+
+def test_static_build_configuration_is_present():
+    blueprint = (ROOT / "render.yaml").read_text(encoding="utf-8")
+
+    assert "runtime: static" in blueprint
+    assert "staticPublishPath: ./dist" in blueprint
+    assert "autoDeployTrigger: checksPass" in blueprint
+    assert "source: /app" in blueprint
+    assert "destination: /app/index.html" in blueprint
+
+
+def test_release_cmd_helpers_are_generic():
+    for filename in ["setup.cmd", "test.cmd", "build.cmd", "deploy_render.cmd", "verify_production.cmd", "release_v1.cmd"]:
+        content = (ROOT / filename).read_text(encoding="utf-8")
+        assert "D:\\Arya" not in content
+
+
+def test_service_worker_precaches_landing_media():
+    service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
+
+    assert "/static/images/app-preview.png" in service_worker
+    assert "/static/images/landing-mother-window.png" in service_worker
+    assert "/static/images/landing-mother-phone.png" in service_worker

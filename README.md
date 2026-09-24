@@ -32,7 +32,7 @@ BumpMarks is intentionally focused. It is a logging utility, not a pregnancy pla
 
 BumpMarks stores movement records, notes, preferences, and settings in the browser's local storage.
 
-The Flask application serves the app shell. Movement data is not submitted to the Flask server.
+Flask is used for local development. The recommended production deployment is a static site, so there is no BumpMarks application server receiving movement data.
 
 Analytics inside BumpMarks are calculated locally from the user's own stored records. BumpMarks does not include third-party analytics or advertising SDKs.
 
@@ -127,7 +127,7 @@ BumpMarks uses a restrained cobalt-blue accent with cool neutral surfaces.
 
 The public landing page and the tracker share the same color system so the product feels continuous when moving from the website into the installed app.
 
-The landing page uses a working counter demo and product-specific typography rather than a fabricated dashboard mockup.
+The landing page includes a small interactive counter demo and a real product screenshot rather than a fabricated dashboard mockup.
 
 ## Data model
 
@@ -191,7 +191,7 @@ The interface includes:
 
 ## Security
 
-The Flask server applies response headers including:
+Local Flask development and the production static-site configuration apply equivalent security headers including:
 
 - Content Security Policy
 - Referrer Policy
@@ -210,8 +210,32 @@ It does not assess fetal wellbeing, diagnose medical conditions, determine wheth
 
 Users should follow the movement-counting method and medical guidance provided by their own healthcare professional.
 
+## Production build
+
+Build the static production bundle with:
+
+```bash
+python build_static.py
+```
+
+The output is written to `dist/`. Run the complete release verification with:
+
+```bash
+python verify_release.py
+```
+
+## Deployment
+
+BumpMarks includes a Render Blueprint for free static-site deployment. On Windows, after pushing the repository, run:
+
+```cmd
+deploy_render.cmd
+```
+
+This opens Render with the current GitHub repository preselected. See `DEPLOYMENT.md` for production routes, custom-domain guidance, and the release flow.
+
 ## Open source
 
-BumpMarks is intended to be an open-source project.
+BumpMarks is released under the MIT License. See `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md`, and `ASSETS.md`.
 
-Licensing, contribution guidelines, security reporting instructions, production deployment documentation, and the first formal release are finalized as part of the release preparation milestone.
+The first public release is version `1.0.0`.

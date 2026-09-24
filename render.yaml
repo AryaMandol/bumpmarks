@@ -1,0 +1,51 @@
+services:
+  - type: web
+    runtime: static
+    name: bumpmarks-pwa
+    buildCommand: python build_static.py && python verify_release.py --skip-build
+    staticPublishPath: ./dist
+    autoDeployTrigger: checksPass
+    pullRequestPreviewsEnabled: true
+
+    routes:
+      - type: rewrite
+        source: /app
+        destination: /app/index.html
+      - type: rewrite
+        source: /offline
+        destination: /offline/index.html
+      - type: rewrite
+        source: /healthz
+        destination: /healthz.json
+
+    headers:
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Permissions-Policy
+        value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+      - path: /*
+        name: Cross-Origin-Opener-Policy
+        value: same-origin
+      - path: /*
+        name: Strict-Transport-Security
+        value: "max-age=31536000"
+      - path: /sw.js
+        name: Cache-Control
+        value: "no-cache, no-store, must-revalidate"
+      - path: /static/images/*
+        name: Cache-Control
+        value: "public, max-age=86400"
+      - path: /static/icons/*
+        name: Cache-Control
+        value: "public, max-age=86400"

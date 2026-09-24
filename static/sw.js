@@ -1,4 +1,4 @@
-const CACHE_NAME = "bumpmarks-v10";
+const CACHE_NAME = "bumpmarks-v11";
 
 const APP_SHELL = [
     "/",
@@ -12,7 +12,10 @@ const APP_SHELL = [
     "/static/icons/icon-192.png",
     "/static/icons/icon-512.png",
     "/static/icons/icon-maskable-512.png",
-    "/static/icons/apple-touch-icon.png"
+    "/static/icons/apple-touch-icon.png",
+    "/static/images/app-preview.png",
+    "/static/images/landing-mother-window.png",
+    "/static/images/landing-mother-phone.png",
 ];
 
 
