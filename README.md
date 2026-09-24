@@ -113,7 +113,21 @@ Then open:
 http://127.0.0.1:5000
 ```
 
+The root URL is the public landing page. The tracker itself is available at:
+
+```text
+http://127.0.0.1:5000/app
+```
+
 `localhost` and `127.0.0.1` are treated as secure development origins by modern browsers, which allows local PWA testing.
+
+## Visual identity
+
+BumpMarks uses a restrained cobalt-blue accent with cool neutral surfaces.
+
+The public landing page and the tracker share the same color system so the product feels continuous when moving from the website into the installed app.
+
+The landing page uses a working counter demo and product-specific typography rather than a fabricated dashboard mockup.
 
 ## Data model
 

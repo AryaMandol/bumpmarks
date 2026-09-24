@@ -1,9 +1,12 @@
-const CACHE_NAME = "bumpmarks-v8";
+const CACHE_NAME = "bumpmarks-v9";
 
 const APP_SHELL = [
     "/",
+    "/app",
     "/offline",
+    "/static/css/landing.css",
     "/static/css/app.css",
+    "/static/js/landing.js",
     "/static/js/app.js",
     "/static/manifest.webmanifest",
     "/static/icons/icon-192.png",
@@ -64,12 +67,19 @@ self.addEventListener("fetch", event => {
 
                     caches
                         .open(CACHE_NAME)
-                        .then(cache => cache.put("/", copy))
+                        .then(cache => cache.put(event.request, copy))
                         .catch(() => {});
 
                     return response;
                 })
                 .catch(async () => {
+                    if (requestUrl.pathname.startsWith("/app")) {
+                        return (
+                            await caches.match("/app") ||
+                            await caches.match("/offline")
+                        );
+                    }
+
                     return (
                         await caches.match("/") ||
                         await caches.match("/offline")

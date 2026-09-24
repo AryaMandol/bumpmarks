@@ -1,17 +1,18 @@
 :root {
-    --background: #f7f5f2;
+    --background: #f5f7fb;
     --surface: #ffffff;
-    --text: #252422;
-    --muted: #77726d;
-    --border: #e8e3dd;
-    --primary: #554b45;
-    --primary-soft: #eee9e4;
-    --danger: #9b3a35;
-    --danger-soft: #faecea;
-    --success: #49654e;
-    --success-soft: #edf5ee;
-    --shadow: 0 8px 28px rgba(31, 27, 24, 0.06);
-    --radius-large: 24px;
+    --text: #172033;
+    --muted: #647086;
+    --border: #dce3ef;
+    --primary: #3157d5;
+    --primary-strong: #2344b7;
+    --primary-soft: #eaf0ff;
+    --danger: #a33a4a;
+    --danger-soft: #fbedef;
+    --success: #28715b;
+    --success-soft: #e8f4ef;
+    --shadow: 0 12px 34px rgba(30, 55, 120, 0.08);
+    --radius-large: 20px;
 }
 
 * {
@@ -26,7 +27,7 @@ body {
     margin: 0;
     background: var(--background);
     color: var(--text);
-    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: "Segoe UI Variable", Aptos, "Segoe UI", system-ui, sans-serif;
 }
 
 body.modal-open {
@@ -150,8 +151,8 @@ button {
 }
 
 .tracking-status.closed {
-    background: #f1eeee;
-    color: #7a6f6b;
+    background: #eef1f6;
+    color: #738096;
 }
 
 .count-area {
@@ -214,7 +215,7 @@ button {
     padding: 13px 14px;
     border: 1px solid var(--border);
     border-radius: 15px;
-    background: #faf9f7;
+    background: #f8faff;
 }
 
 .target-row {
@@ -369,7 +370,7 @@ button {
     min-height: 48px;
     border: 1px solid var(--border);
     border-radius: 14px;
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--text);
     font-weight: 700;
     cursor: pointer;
@@ -392,7 +393,7 @@ button {
     border: 1px solid var(--border);
     border-radius: 15px;
     outline: none;
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--text);
     line-height: 1.5;
 }
@@ -578,7 +579,7 @@ button {
     border: 1px solid var(--border);
     border-radius: 13px;
     outline: none;
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--text);
 }
 
@@ -621,7 +622,7 @@ button {
     width: 48px;
     height: 28px;
     border-radius: 999px;
-    background: #d9d3cd;
+    background: #cfd7e5;
     cursor: pointer;
     transition: background 140ms ease;
 }
@@ -654,7 +655,7 @@ button {
 .settings-error {
     margin-top: 14px;
     padding: 12px 14px;
-    border: 1px solid #efc6c2;
+    border: 1px solid #ebc7ce;
     border-radius: 14px;
     background: var(--danger-soft);
     color: var(--danger);
@@ -786,7 +787,7 @@ button {
     flex: 0 0 38px;
     border: 1px solid var(--border);
     border-radius: 50%;
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--text);
     font-size: 24px;
     line-height: 1;
@@ -818,7 +819,7 @@ button {
     min-height: 54px;
     border: 1px solid var(--border);
     border-radius: 15px;
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--text);
 }
 
@@ -869,7 +870,7 @@ button {
     padding: 8px 10px;
     border: 1px solid var(--border);
     border-radius: 14px;
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--text);
     font-size: 12px;
     font-weight: 650;
@@ -915,7 +916,7 @@ button {
 
 .secondary-action {
     border: 1px solid var(--border);
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--text);
 }
 
@@ -936,7 +937,7 @@ button {
     padding: 13px 10px;
     border: 1px solid var(--border);
     border-radius: 15px;
-    background: #faf9f7;
+    background: #f8faff;
     text-align: center;
 }
 
@@ -999,7 +1000,7 @@ button {
     transform: translateX(-50%) translateY(20px);
     z-index: 30;
     padding: 10px 15px;
-    background: #252422;
+    background: #172033;
     color: #ffffff;
     border-radius: 999px;
     font-size: 13px;
@@ -1040,7 +1041,7 @@ button {
 
 .secondary-wide-button {
     border: 1px solid var(--border);
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--text);
 }
 
@@ -1049,13 +1050,13 @@ button {
 }
 
 .danger-wide-button {
-    border: 1px solid #efc6c2;
+    border: 1px solid #ebc7ce;
     background: var(--danger-soft);
     color: var(--danger);
 }
 
 .danger-zone {
-    border-color: #efc6c2;
+    border-color: #ebc7ce;
 }
 
 .visually-hidden-file {
@@ -1134,7 +1135,7 @@ button {
     padding: 12px 13px;
     border: 1px solid var(--border);
     border-radius: 14px;
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--muted);
     font-size: 12px;
     line-height: 1.5;
@@ -1194,7 +1195,7 @@ button {
     padding: 10px 14px;
     transform: translateY(-160%);
     border-radius: 12px;
-    background: #252422;
+    background: #172033;
     color: #ffffff;
     font-weight: 700;
     text-decoration: none;
@@ -1207,7 +1208,7 @@ button {
 .storage-warning {
     margin: -6px 0 16px;
     padding: 13px 14px;
-    border: 1px solid #e6b7b2;
+    border: 1px solid #e6b8c1;
     border-radius: 16px;
     background: var(--danger-soft);
     color: var(--danger);
@@ -1234,7 +1235,7 @@ button {
     a,
     [tabindex]
 ):focus-visible {
-    outline: 3px solid #2f6f8f;
+    outline: 3px solid #173cae;
     outline-offset: 3px;
 }
 
@@ -1353,7 +1354,7 @@ button {
     min-height: 40px;
     border: 1px solid var(--border);
     border-radius: 12px;
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--muted);
     font-size: 11px;
     font-weight: 700;
@@ -1378,7 +1379,7 @@ button {
     border: 1px solid var(--border);
     border-radius: 13px;
     outline: none;
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--text);
 }
 
@@ -1478,7 +1479,7 @@ button {
     justify-content: flex-end;
     overflow: hidden;
     border-radius: 8px 8px 3px 3px;
-    background: #f2eeea;
+    background: #edf1f8;
 }
 
 .chart-bar-segment {
@@ -1488,7 +1489,7 @@ button {
 }
 
 .chart-bar-segment.secondary {
-    background: #a99d94;
+    background: #8fa4df;
 }
 
 .chart-bar-label {
@@ -1560,7 +1561,7 @@ button {
 }
 
 .analytics-legend-swatch.secondary {
-    background: #a99d94;
+    background: #8fa4df;
 }
 
 .doctor-view-panel {
@@ -1576,7 +1577,7 @@ button {
     padding: 0 13px;
     border: 1px solid var(--border);
     border-radius: 12px;
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--text);
     font-size: 11px;
     font-weight: 700;
@@ -1624,7 +1625,7 @@ button {
 }
 
 .doctor-table th {
-    background: #faf9f7;
+    background: #f8faff;
     color: var(--muted);
     font-size: 10px;
     font-weight: 750;
@@ -1701,4 +1702,79 @@ button {
     .doctor-table {
         min-width: 0;
     }
+}
+
+
+.app-brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.app-brand-icon {
+    display: block;
+    border-radius: 11px;
+    box-shadow: 0 7px 18px rgba(49, 87, 213, 0.18);
+}
+
+.today-card {
+    border-top: 4px solid var(--primary);
+}
+
+.catchup-card,
+.note-card,
+.recent-card,
+.doctor-card,
+.settings-card,
+.analytics-controls-card,
+.analytics-chart-card,
+.doctor-summary-card {
+    box-shadow: none;
+}
+
+.catchup-button:hover,
+.secondary-wide-button:hover,
+.small-secondary-button:hover {
+    border-color: #b9c7ed;
+    background: var(--primary-soft);
+}
+
+.movement-button:hover,
+.settings-save-button:hover {
+    background: var(--primary-strong);
+}
+
+.bottom-nav {
+    border-color: #cfd8e9;
+    box-shadow: 0 10px 30px rgba(30, 55, 120, 0.12);
+}
+
+.nav-button.active {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+.nav-button.active .nav-icon {
+    color: #ffffff;
+}
+
+.tracking-status {
+    border: 1px solid #c8d4f4;
+}
+
+.analytics-mode-button.active {
+    color: var(--primary);
+}
+
+.analytics-preset.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #ffffff;
+}
+
+.chart-bar-segment.secondary,
+.analytics-legend-swatch.secondary {
+    background: #8fa4df;
 }

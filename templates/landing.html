@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f6f8fc">
+    <meta name="description" content="BumpMarks is a private, local-first baby movement log with simple live and catch-up recording.">
+
+    <title>BumpMarks - Private baby movement tracking</title>
+
+    <link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+</head>
+<body>
+
+<a class="landing-skip" href="#landing-main">Skip to main content</a>
+
+<header class="site-header">
+    <a class="site-brand" href="/" aria-label="BumpMarks home">
+        <img
+            src="{{ url_for('static', filename='icons/icon-192.png') }}"
+            width="34"
+            height="34"
+            alt=""
+        >
+        <span>BumpMarks</span>
+    </a>
+
+    <nav class="site-nav" aria-label="Main navigation">
+        <a href="#how-it-works">How it works</a>
+        <a href="#privacy">Privacy</a>
+        <a class="nav-cta" href="/app">Open BumpMarks</a>
+    </nav>
+</header>
+
+<main id="landing-main">
+    <section class="hero">
+        <div class="hero-copy">
+            <h1>Baby movement tracking, kept simple.</h1>
+            <p>
+                A private, local-first movement log built for one-tap recording and honest catch-up entries.
+            </p>
+
+            <div class="hero-actions">
+                <a class="primary-cta" href="/app">Open BumpMarks</a>
+                <a class="text-link" href="#how-it-works">How it works</a>
+            </div>
+        </div>
+
+        <div class="hero-demo-wrap">
+            <div class="hero-demo" aria-label="Interactive BumpMarks counter demo">
+                <div class="demo-top">
+                    <span>Try the counter</span>
+                    <button id="demo-reset" class="demo-reset" type="button">Reset</button>
+                </div>
+
+                <div class="demo-count" id="demo-count" aria-live="polite">0</div>
+                <div class="demo-label">movements in this demo</div>
+                <div id="demo-tally" class="demo-tally" aria-hidden="true"></div>
+
+                <button id="demo-add" class="demo-add" type="button">
+                    <span>+</span>
+                    Baby Moved
+                </button>
+
+                <p class="demo-note">This landing-page demo is not saved.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="how-it-works" class="principle-section">
+        <div class="principle-heading">
+            <h2>One tap when you can. Catch up when you can't.</h2>
+            <p>
+                BumpMarks follows the way people actually record movements, including the moments when the phone is not in reach.
+            </p>
+        </div>
+
+        <div class="principle-list">
+            <article>
+                <strong>Tap once</strong>
+                <p>Record a movement immediately with its actual entry time.</p>
+            </article>
+
+            <article>
+                <strong>Catch up later</strong>
+                <p>Add several remembered movements without inventing exact timestamps.</p>
+            </article>
+
+            <article>
+                <strong>Review clearly</strong>
+                <p>See history, notes, daily totals, and descriptive charts in one place.</p>
+            </article>
+
+            <article>
+                <strong>Share facts</strong>
+                <p>Use Doctor View, CSV export, or a local backup when you need them.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="product-section">
+        <div class="product-copy">
+            <h2>The tracker stays quiet so the action stays obvious.</h2>
+            <p>
+                The main screen keeps the count, tally, live button, catch-up entry, and daily context within easy reach.
+            </p>
+
+            <a class="text-link" href="/app">Open BumpMarks</a>
+        </div>
+
+        <div class="product-rhythm" aria-label="BumpMarks recording principle">
+            <div>
+                <strong>1 tap</strong>
+                <span>when you can</span>
+            </div>
+            <div>
+                <strong>catch up</strong>
+                <span>when you can't</span>
+            </div>
+        </div>
+    </section>
+
+    <section id="privacy" class="privacy-section">
+        <div class="privacy-intro">
+            <h2>Private by default.</h2>
+            <p>Your movement records stay in your browser unless you choose to export them.</p>
+        </div>
+
+        <div class="privacy-statements" aria-label="BumpMarks privacy principles">
+            <p>No account</p>
+            <p>No advertising</p>
+            <p>No cloud requirement</p>
+            <p>No AI health analysis</p>
+        </div>
+    </section>
+
+    <section class="analytics-section">
+        <div>
+            <h2>Useful context without pretending to diagnose.</h2>
+            <p>
+                Analytics summarize what was recorded. Doctor View keeps live entries, catch-up entries, notes, and recording spans factual.
+            </p>
+        </div>
+
+        <div class="analytics-lines" aria-label="Analytics available in BumpMarks">
+            <div>
+                <span>Recorded totals</span>
+                <strong>by logged day</strong>
+            </div>
+            <div>
+                <span>Live vs catch-up</span>
+                <strong>kept distinct</strong>
+            </div>
+            <div>
+                <span>Time of day</span>
+                <strong>live entries only</strong>
+            </div>
+        </div>
+    </section>
+
+    <section class="closing-section">
+        <h2>Record the movement. Keep the context.</h2>
+        <a class="primary-cta" href="/app">Open BumpMarks</a>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="site-brand footer-brand">
+        <img
+            src="{{ url_for('static', filename='icons/icon-192.png') }}"
+            width="30"
+            height="30"
+            alt=""
+        >
+        <span>BumpMarks</span>
+    </div>
+
+    <p>A private movement logging tool. Not a diagnostic or medical decision-making system.</p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/landing.js') }}"></script>
+</body>
+</html>

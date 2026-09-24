@@ -12,7 +12,8 @@ def test_home_page_loads():
     response = client.get("/")
 
     assert response.status_code == 200
-    assert b"BumpMarks" in response.data
+    assert b"Baby movement tracking, kept simple." in response.data
+    assert b'href="/app"' in response.data
 
 
 def test_service_worker_loads():
@@ -35,7 +36,7 @@ def test_manifest_loads():
 def test_catchup_modal_is_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="catchup-modal"' in response.data
     assert b'id="catchup-count"' in response.data
@@ -46,7 +47,7 @@ def test_catchup_modal_is_present():
 def test_delete_confirmation_is_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="delete-modal"' in response.data
     assert b'id="delete-confirm"' in response.data
@@ -55,7 +56,7 @@ def test_delete_confirmation_is_present():
 def test_history_view_and_navigation_are_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="history-view"' in response.data
     assert b'id="history-list"' in response.data
@@ -66,7 +67,7 @@ def test_history_view_and_navigation_are_present():
 def test_daily_notes_are_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="today-note"' in response.data
     assert b'id="detail-note"' in response.data
@@ -76,7 +77,7 @@ def test_daily_notes_are_present():
 def test_day_detail_modal_is_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="day-detail-modal"' in response.data
     assert b'id="day-detail-summary"' in response.data
@@ -86,7 +87,7 @@ def test_day_detail_modal_is_present():
 def test_settings_view_and_controls_are_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="settings-view"' in response.data
     assert b'id="nav-settings"' in response.data
@@ -101,7 +102,7 @@ def test_settings_view_and_controls_are_present():
 def test_target_and_doctor_instruction_ui_are_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="target-progress"' in response.data
     assert b'id="target-progress-bar"' in response.data
@@ -168,7 +169,7 @@ def test_settings_save_and_validation_logic_exists():
 def test_export_view_and_navigation_are_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="export-view"' in response.data
     assert b'id="nav-export"' in response.data
@@ -180,7 +181,7 @@ def test_export_view_and_navigation_are_present():
 def test_backup_restore_and_delete_controls_are_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="download-backup"' in response.data
     assert b'id="restore-file"' in response.data
@@ -191,7 +192,7 @@ def test_backup_restore_and_delete_controls_are_present():
 def test_restore_and_delete_confirmation_modals_are_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="restore-confirm-modal"' in response.data
     assert b'id="restore-confirm"' in response.data
@@ -239,7 +240,7 @@ def test_offline_route_loads():
 def test_manifest_has_hardened_pwa_metadata():
     manifest = (ROOT / "static" / "manifest.webmanifest").read_text(encoding="utf-8")
 
-    assert '"id": "/"' in manifest
+    assert '"id": "/app"' in manifest
     assert '"scope": "/"' in manifest
     assert '"display": "standalone"' in manifest
     assert '"orientation": "portrait"' in manifest
@@ -249,7 +250,7 @@ def test_manifest_has_hardened_pwa_metadata():
 def test_install_ui_is_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="install-app"' in response.data
     assert b'id="install-ready"' in response.data
@@ -260,7 +261,7 @@ def test_install_ui_is_present():
 def test_update_banner_is_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="update-banner"' in response.data
     assert b'id="apply-update"' in response.data
@@ -269,7 +270,7 @@ def test_update_banner_is_present():
 def test_service_worker_has_offline_and_update_handling():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v8";' in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v9";' in service_worker
     assert '"/offline"' in service_worker
     assert 'event.request.mode === "navigate"' in service_worker
     assert '"SKIP_WAITING"' in service_worker
@@ -288,7 +289,7 @@ def test_frontend_has_install_and_update_logic():
 def test_security_and_privacy_headers_are_set():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert response.headers["Referrer-Policy"] == "no-referrer"
     assert response.headers["X-Content-Type-Options"] == "nosniff"
@@ -311,7 +312,7 @@ def test_service_worker_response_is_not_strongly_cached():
 def test_accessibility_landmarks_and_status_ui_are_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'class="skip-link"' in response.data
     assert b'id="main-content"' in response.data
@@ -323,7 +324,7 @@ def test_accessibility_landmarks_and_status_ui_are_present():
 def test_modal_dialogs_have_programmatic_focus_targets():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'class="modal-sheet" tabindex="-1" role="dialog"' in response.data
     assert b'class="modal-sheet compact-sheet" tabindex="-1" role="dialog"' in response.data
@@ -371,7 +372,7 @@ def test_frontend_refreshes_time_sensitive_state_after_resume():
 def test_analytics_view_and_navigation_are_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="analytics-view"' in response.data
     assert b'id="nav-analytics"' in response.data
@@ -382,7 +383,7 @@ def test_analytics_view_and_navigation_are_present():
 def test_analytics_filters_and_chart_options_are_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="analytics-start-date"' in response.data
     assert b'id="analytics-end-date"' in response.data
@@ -398,7 +399,7 @@ def test_analytics_filters_and_chart_options_are_present():
 def test_doctor_view_table_and_print_control_are_present():
     client = app.test_client()
 
-    response = client.get("/")
+    response = client.get("/app")
 
     assert b'id="doctor-view-panel"' in response.data
     assert b'id="doctor-table-body"' in response.data
@@ -444,3 +445,70 @@ def test_analytics_css_includes_mobile_and_print_support():
     assert ".doctor-table-wrap" in stylesheet
     assert "@media print" in stylesheet
     assert ".nav-analytics-icon" in stylesheet
+
+
+def test_app_route_loads():
+    client = app.test_client()
+
+    response = client.get("/app")
+
+    assert response.status_code == 200
+    assert b'id="movement-button"' in response.data
+    assert b'id="nav-analytics"' in response.data
+
+
+def test_landing_page_has_real_interactive_demo():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'id="demo-count"' in response.data
+    assert b'id="demo-add"' in response.data
+    assert b'id="demo-reset"' in response.data
+    assert b"This landing-page demo is not saved." in response.data
+
+
+def test_landing_page_has_privacy_and_product_sections():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'id="how-it-works"' in response.data
+    assert b'id="privacy"' in response.data
+    assert b"No cloud requirement" in response.data
+    assert b"No AI health analysis" in response.data
+    assert b'class="product-rhythm"' in response.data
+
+
+def test_landing_assets_exist_and_use_cobalt_identity():
+    stylesheet = (ROOT / "static" / "css" / "landing.css").read_text(encoding="utf-8")
+    javascript = (ROOT / "static" / "js" / "landing.js").read_text(encoding="utf-8")
+
+    assert "--accent: #3157d5;" in stylesheet
+    assert ".hero-demo-wrap" in stylesheet
+    assert ".privacy-section" in stylesheet
+    assert "renderDemoTally" in javascript
+
+
+def test_app_uses_same_brand_accent():
+    stylesheet = (ROOT / "static" / "css" / "app.css").read_text(encoding="utf-8")
+
+    assert "--primary: #3157d5;" in stylesheet
+    assert "--background: #f5f7fb;" in stylesheet
+    assert ".app-brand-link" in stylesheet
+
+
+def test_manifest_starts_installed_app_in_tracker():
+    manifest = (ROOT / "static" / "manifest.webmanifest").read_text(encoding="utf-8")
+
+    assert '"id": "/app"' in manifest
+    assert '"start_url": "/app"' in manifest
+    assert '"theme_color": "#3157d5"' in manifest
+
+
+def test_service_worker_caches_landing_and_app_assets():
+    service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
+
+    assert '"/app"' in service_worker
+    assert '"/static/css/landing.css"' in service_worker
+    assert '"/static/js/landing.js"' in service_worker

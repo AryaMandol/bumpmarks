@@ -1,14 +1,14 @@
 {
-  "id": "/",
+  "id": "/app",
   "name": "BumpMarks",
   "short_name": "BumpMarks",
   "description": "Private, simple baby movement tracking.",
-  "start_url": "/",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f7f5f2",
-  "theme_color": "#faf8f5",
+  "background_color": "#f5f7fb",
+  "theme_color": "#3157d5",
   "categories": [
     "health",
     "utilities"
