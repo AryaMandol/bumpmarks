@@ -142,3 +142,33 @@ It does not assess fetal wellbeing, diagnose medical conditions, determine wheth
 BumpMarks V1 does not schedule background reminders.
 
 Browser-only timers and notifications are not reliable enough across Android, iOS, browser, and installed-PWA states for a movement-tracking utility. The app will not claim to provide a reminder unless it can do so predictably.
+
+
+### BM-007 - Complete in this version
+
+- Privacy/security response headers
+- Content Security Policy limiting resources to BumpMarks itself
+- Referrer suppression
+- Camera, microphone, geolocation, payment, and USB browser permissions disabled by policy
+- Service worker served with no-cache update semantics
+- Skip-to-content navigation
+- Visible keyboard focus states
+- Reduced-motion support
+- Better touch targets
+- Modal focus trapping and background inert state
+- Focus restoration after dialogs close
+- Screen-reader status improvements and ARIA progress state
+- Accessible active-tab state
+- Local-storage access failure warning
+- Corrupt/unreadable local data protection without silently overwriting it
+- Stored-entry sanitization before use
+- Date/tracking-window refresh when the app resumes or remains open across time changes
+- Expanded automated privacy, accessibility, storage-resilience, and lifecycle checks
+
+## Privacy Architecture
+
+BumpMarks does not require an account and does not include third-party analytics or advertising SDKs.
+
+The Flask server serves the application shell. Movement entries, notes, settings, backups, and restore operations remain browser-side in V1.
+
+Security headers additionally instruct supported browsers not to grant the app camera, microphone, geolocation, payment, or USB capabilities.

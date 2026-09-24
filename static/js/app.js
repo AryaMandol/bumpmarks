@@ -27,6 +27,9 @@ const emptyStateElement = document.getElementById("empty-state");
 const entryCountLabelElement = document.getElementById("entry-count-label");
 const customCatchupButton = document.getElementById("custom-catchup-button");
 const toastElement = document.getElementById("toast");
+const storageWarningElement = document.getElementById("storage-warning");
+const mainContent = document.getElementById("main-content");
+const bottomNav = document.querySelector(".bottom-nav");
 
 const updateBanner = document.getElementById("update-banner");
 const applyUpdateButton = document.getElementById("apply-update");
@@ -114,6 +117,11 @@ let detailNoteTimer = null;
 let pendingRestoreState = null;
 let deferredInstallPrompt = null;
 let waitingServiceWorker = null;
+let storageAccessAvailable = true;
+let storageWritesBlocked = false;
+let storageWarningMessage = "";
+let lastModalTrigger = null;
+let lastRenderedDateKey = null;
 
 
 
@@ -311,7 +319,7 @@ function normalizeSettings(settings) {
 
         doctorInstructions:
             typeof input.doctorInstructions === "string"
-                ? input.doctorInstructions
+                ? input.doctorInstructions.slice(0, 1000)
                 : DEFAULT_SETTINGS.doctorInstructions
     };
 }
@@ -326,59 +334,175 @@ function createEmptyState() {
 }
 
 
+function normalizeStoredEntry(rawEntry) {
+    if (!rawEntry || typeof rawEntry !== "object") {
+        return null;
+    }
+
+    const count = Number(rawEntry.count);
+
+    if (!Number.isInteger(count) || count < 1 || count > 100) {
+        return null;
+    }
+
+    if (
+        typeof rawEntry.recordedAt !== "string" ||
+        Number.isNaN(new Date(rawEntry.recordedAt).getTime())
+    ) {
+        return null;
+    }
+
+    const type = rawEntry.type === "catchup"
+        ? "catchup"
+        : "live";
+
+    const entry = {
+        id:
+            typeof rawEntry.id === "string" && rawEntry.id
+                ? rawEntry.id.slice(0, 128)
+                : createEntryId(),
+        type,
+        count,
+        recordedAt: rawEntry.recordedAt
+    };
+
+    if (type === "catchup") {
+        entry.approximateTime = APPROXIMATE_TIME_LABELS[rawEntry.approximateTime]
+            ? rawEntry.approximateTime
+            : "unknown";
+    }
+
+    if (
+        typeof rawEntry.editedAt === "string" &&
+        !Number.isNaN(new Date(rawEntry.editedAt).getTime())
+    ) {
+        entry.editedAt = rawEntry.editedAt;
+    }
+
+    return entry;
+}
+
+
 function normalizeDayData(day) {
-    if (!day || typeof day !== "object") {
+    if (!day || typeof day !== "object" || Array.isArray(day)) {
         return {
             entries: [],
             note: ""
         };
     }
 
-    if (!Array.isArray(day.entries)) {
-        day.entries = [];
-    }
+    const rawEntries = Array.isArray(day.entries)
+        ? day.entries
+        : [];
 
-    if (typeof day.note !== "string") {
-        day.note = "";
-    }
+    day.entries = rawEntries
+        .map(normalizeStoredEntry)
+        .filter(Boolean);
+
+    day.note = typeof day.note === "string"
+        ? day.note.slice(0, 500)
+        : "";
 
     return day;
 }
 
 
+function setStorageWarning(message) {
+    storageWarningMessage = message || "";
+
+    if (!storageWarningElement) {
+        return;
+    }
+
+    storageWarningElement.textContent = storageWarningMessage;
+    storageWarningElement.hidden = !storageWarningMessage;
+}
+
+
 function loadState() {
+    let stored;
+
     try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        stored = localStorage.getItem(STORAGE_KEY);
+    } catch (error) {
+        console.error("Local storage is unavailable.", error);
+        storageAccessAvailable = false;
+        storageWritesBlocked = true;
+        storageWarningMessage =
+            "Local storage is unavailable in this browser. Changes can work during this session but may not persist after the app closes.";
+        return createEmptyState();
+    }
 
-        if (!stored) {
-            return createEmptyState();
-        }
+    if (!stored) {
+        return createEmptyState();
+    }
 
+    try {
         const parsed = JSON.parse(stored);
 
-        if (!parsed || typeof parsed !== "object" || typeof parsed.days !== "object") {
+        if (
+            !parsed ||
+            typeof parsed !== "object" ||
+            !parsed.days ||
+            typeof parsed.days !== "object" ||
+            Array.isArray(parsed.days)
+        ) {
+            storageWritesBlocked = true;
+            storageWarningMessage =
+                "Saved BumpMarks data could not be validated. It has not been overwritten. Restore a known-good backup or delete local data to start fresh.";
             return createEmptyState();
         }
 
-        parsed.settings = normalizeSettings(parsed.settings);
+        const safeDays = {};
 
         Object.keys(parsed.days).forEach(dateKey => {
-            parsed.days[dateKey] = normalizeDayData(parsed.days[dateKey]);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+                return;
+            }
+
+            safeDays[dateKey] = normalizeDayData(parsed.days[dateKey]);
         });
 
-        return parsed;
+        return {
+            version: 1,
+            settings: normalizeSettings(parsed.settings),
+            days: safeDays
+        };
     } catch (error) {
-        console.error("Could not read BumpMarks data.", error);
+        console.error("Could not parse BumpMarks data.", error);
+        storageWritesBlocked = true;
+        storageWarningMessage =
+            "Saved BumpMarks data appears unreadable. It has not been overwritten. Restore a known-good backup or delete local data to start fresh.";
         return createEmptyState();
     }
 }
 
 
 function saveState() {
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(state)
-    );
+    if (!storageAccessAvailable || storageWritesBlocked) {
+        setStorageWarning(
+            storageWarningMessage ||
+            "BumpMarks cannot safely write to local storage right now. Changes may only last for this session."
+        );
+        return false;
+    }
+
+    try {
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(state)
+        );
+
+        setStorageWarning("");
+        return true;
+    } catch (error) {
+        console.error("Could not save BumpMarks data.", error);
+        storageAccessAvailable = false;
+        setStorageWarning(
+            "BumpMarks could not save to local storage. Changes may only last for this session. Check browser storage/private-mode restrictions."
+        );
+        return false;
+    }
 }
 
 
@@ -541,6 +665,87 @@ function showToast(message) {
 }
 
 
+
+function getOpenModal() {
+    return [
+        restoreConfirmModal,
+        deleteAllModal,
+        deleteModal,
+        catchupModal,
+        dayDetailModal
+    ].find(modal => modal && !modal.hidden) || null;
+}
+
+
+function getFocusableElements(container) {
+    return Array.from(
+        container.querySelectorAll(
+            'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+        )
+    ).filter(element => !element.hidden);
+}
+
+
+function showModal(modal, focusTarget = null) {
+    lastModalTrigger = document.activeElement;
+    modal.hidden = false;
+    syncBodyModalState();
+
+    window.setTimeout(() => {
+        const target =
+            focusTarget ||
+            getFocusableElements(modal)[0] ||
+            modal.querySelector('[role="dialog"]');
+
+        target?.focus();
+    }, 0);
+}
+
+
+function hideModal(modal) {
+    modal.hidden = true;
+    syncBodyModalState();
+
+    const trigger = lastModalTrigger;
+    lastModalTrigger = null;
+
+    if (!getOpenModal() && trigger instanceof HTMLElement) {
+        window.setTimeout(() => {
+            trigger.focus();
+        }, 0);
+    }
+}
+
+
+function trapModalFocus(event, modal) {
+    if (event.key !== "Tab") {
+        return;
+    }
+
+    const focusable = getFocusableElements(modal);
+
+    if (focusable.length === 0) {
+        event.preventDefault();
+        modal.querySelector('[role="dialog"]')?.focus();
+        return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+        return;
+    }
+
+    if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+    }
+}
+
+
 function syncBodyModalState() {
     const anyOpen =
         !catchupModal.hidden ||
@@ -550,6 +755,14 @@ function syncBodyModalState() {
         !deleteAllModal.hidden;
 
     document.body.classList.toggle("modal-open", anyOpen);
+
+    if (mainContent) {
+        mainContent.inert = anyOpen;
+    }
+
+    if (bottomNav) {
+        bottomNav.inert = anyOpen;
+    }
 }
 
 
@@ -568,6 +781,19 @@ function setActiveView(viewName) {
     navHistoryButton.classList.toggle("active", showHistory);
     navExportButton.classList.toggle("active", showExport);
     navSettingsButton.classList.toggle("active", showSettings);
+
+    [
+        [navTodayButton, showToday],
+        [navHistoryButton, showHistory],
+        [navExportButton, showExport],
+        [navSettingsButton, showSettings]
+    ].forEach(([button, active]) => {
+        if (active) {
+            button.setAttribute("aria-current", "page");
+        } else {
+            button.removeAttribute("aria-current");
+        }
+    });
 
     if (showHistory) {
         renderHistory();
@@ -589,9 +815,8 @@ function setActiveView(viewName) {
 
 
 function closeCatchupModal() {
-    catchupModal.hidden = true;
+    hideModal(catchupModal);
     editingEntryId = null;
-    syncBodyModalState();
 }
 
 
@@ -653,11 +878,9 @@ function openCatchupModal(count = 1, entryId = null) {
         catchupSaveButton.textContent = "Add catch-up";
     }
 
-    catchupModal.hidden = false;
-    syncBodyModalState();
+    showModal(catchupModal, catchupCountInput);
 
     window.setTimeout(() => {
-        catchupCountInput.focus();
         catchupCountInput.select();
     }, 30);
 }
@@ -758,15 +981,13 @@ function openDeleteModal(entryId) {
     }
 
     pendingDeleteEntryId = entryId;
-    deleteModal.hidden = false;
-    syncBodyModalState();
+    showModal(deleteModal, deleteCancelButton);
 }
 
 
 function closeDeleteModal() {
-    deleteModal.hidden = true;
+    hideModal(deleteModal);
     pendingDeleteEntryId = null;
-    syncBodyModalState();
 }
 
 
@@ -1204,16 +1425,14 @@ function validateBackupPayload(payload) {
 
 
 function closeRestoreConfirm() {
-    restoreConfirmModal.hidden = true;
+    hideModal(restoreConfirmModal);
     pendingRestoreState = null;
-    syncBodyModalState();
 }
 
 
 function openRestoreConfirm(restoredState) {
     pendingRestoreState = restoredState;
-    restoreConfirmModal.hidden = false;
-    syncBodyModalState();
+    showModal(restoreConfirmModal, restoreCancelButton);
 }
 
 
@@ -1224,11 +1443,13 @@ function applyRestore() {
     }
 
     state = pendingRestoreState;
-    saveState();
+    storageWritesBlocked = false;
+    storageAccessAvailable = true;
 
-    restoreConfirmModal.hidden = true;
+    const persisted = saveState();
+
+    hideModal(restoreConfirmModal);
     pendingRestoreState = null;
-    syncBodyModalState();
 
     renderDate();
     render();
@@ -1236,7 +1457,11 @@ function applyRestore() {
     renderExportForm();
     setActiveView("today");
 
-    showToast("Backup restored");
+    showToast(
+        persisted
+            ? "Backup restored"
+            : "Backup loaded for this session only"
+    );
 }
 
 
@@ -1283,24 +1508,33 @@ function handleRestoreFile(event) {
 
 
 function openDeleteAllConfirm() {
-    deleteAllModal.hidden = false;
-    syncBodyModalState();
+    showModal(deleteAllModal, deleteAllCancelButton);
 }
 
 
 function closeDeleteAllConfirm() {
-    deleteAllModal.hidden = true;
-    syncBodyModalState();
+    hideModal(deleteAllModal);
 }
 
 
 function deleteAllLocalData() {
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+        storageAccessAvailable = true;
+        storageWritesBlocked = false;
+        setStorageWarning("");
+    } catch (error) {
+        console.error("Could not delete local BumpMarks data.", error);
+        setStorageWarning(
+            "BumpMarks could not erase browser storage. Your browser may be blocking local storage access."
+        );
+        closeDeleteAllConfirm();
+        return;
+    }
 
     state = createEmptyState();
 
-    deleteAllModal.hidden = true;
-    syncBodyModalState();
+    hideModal(deleteAllModal);
 
     renderDate();
     render();
@@ -1359,6 +1593,8 @@ function renderTargetProgress(count) {
     const complete = count >= target;
 
     targetProgressText.textContent = `${count} / ${target}`;
+    targetProgress.setAttribute("aria-valuemax", String(target));
+    targetProgress.setAttribute("aria-valuenow", String(Math.min(count, target)));
     targetProgressBar.style.width = `${percentage}%`;
     targetProgress.classList.toggle("complete", complete);
     targetProgressMessage.textContent = complete
@@ -1712,8 +1948,7 @@ function openDayDetail(dateKey) {
     selectedHistoryDateKey = dateKey;
     detailNoteStatus.textContent = "";
     renderDayDetail(dateKey);
-    dayDetailModal.hidden = false;
-    syncBodyModalState();
+    showModal(dayDetailModal, dayDetailCloseButton);
 }
 
 
@@ -1731,10 +1966,9 @@ function closeDayDetail() {
         }
     }
 
-    dayDetailModal.hidden = true;
+    hideModal(dayDetailModal);
     selectedHistoryDateKey = null;
     detailNoteStatus.textContent = "";
-    syncBodyModalState();
 }
 
 
@@ -1772,6 +2006,21 @@ function render() {
     }
 
     undoButton.disabled = today.entries.length === 0;
+}
+
+
+
+function refreshTimeSensitiveUi() {
+    const currentDateKey = getLocalDateKey();
+
+    if (currentDateKey !== lastRenderedDateKey) {
+        renderDate();
+        render();
+        lastRenderedDateKey = currentDateKey;
+        return;
+    }
+
+    renderTrackingWindow();
 }
 
 
@@ -1894,6 +2143,13 @@ saveSettingsButton.addEventListener("click", saveSettings);
 
 
 document.addEventListener("keydown", event => {
+    const openModal = getOpenModal();
+
+    if (openModal && event.key === "Tab") {
+        trapModalFocus(event, openModal);
+        return;
+    }
+
     if (event.key !== "Escape") {
         return;
     }
@@ -1930,6 +2186,17 @@ applyUpdateButton.addEventListener("click", applyPendingUpdate);
 undoButton.addEventListener("click", undoLastEntry);
 
 
+
+window.addEventListener("focus", refreshTimeSensitiveUi);
+
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+        refreshTimeSensitiveUi();
+    }
+});
+
+window.setInterval(refreshTimeSensitiveUi, 60_000);
+
 window.addEventListener("load", () => {
     registerPwaHandlers();
     registerServiceWorker();
@@ -1943,3 +2210,8 @@ render();
 renderSettingsForm();
 renderExportForm();
 setActiveView("today");
+lastRenderedDateKey = getLocalDateKey();
+
+if (storageWarningMessage) {
+    setStorageWarning(storageWarningMessage);
+}

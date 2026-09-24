@@ -1,4 +1,4 @@
-const CACHE_NAME = "bumpmarks-v6";
+const CACHE_NAME = "bumpmarks-v7";
 
 const APP_SHELL = [
     "/",

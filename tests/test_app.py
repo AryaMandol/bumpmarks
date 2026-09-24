@@ -269,7 +269,7 @@ def test_update_banner_is_present():
 def test_service_worker_has_offline_and_update_handling():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v6";' in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v7";' in service_worker
     assert '"/offline"' in service_worker
     assert 'event.request.mode === "navigate"' in service_worker
     assert '"SKIP_WAITING"' in service_worker
@@ -283,3 +283,86 @@ def test_frontend_has_install_and_update_logic():
     assert "registerServiceWorker" in javascript
     assert "applyPendingUpdate" in javascript
     assert "controllerchange" in javascript
+
+
+def test_security_and_privacy_headers_are_set():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert response.headers["Referrer-Policy"] == "no-referrer"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert "camera=()" in response.headers["Permissions-Policy"]
+    assert "microphone=()" in response.headers["Permissions-Policy"]
+    assert "geolocation=()" in response.headers["Permissions-Policy"]
+    assert "frame-ancestors 'none'" in response.headers["Content-Security-Policy"]
+    assert "object-src 'none'" in response.headers["Content-Security-Policy"]
+
+
+def test_service_worker_response_is_not_strongly_cached():
+    client = app.test_client()
+
+    response = client.get("/sw.js")
+
+    assert response.headers["Cache-Control"] == "no-cache"
+
+
+def test_accessibility_landmarks_and_status_ui_are_present():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'class="skip-link"' in response.data
+    assert b'id="main-content"' in response.data
+    assert b'id="storage-warning"' in response.data
+    assert b'aria-current="page"' in response.data
+    assert b'aria-atomic="true"' in response.data
+
+
+def test_modal_dialogs_have_programmatic_focus_targets():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'class="modal-sheet" tabindex="-1" role="dialog"' in response.data
+    assert b'class="modal-sheet compact-sheet" tabindex="-1" role="dialog"' in response.data
+    assert b'class="modal-sheet day-detail-sheet" tabindex="-1" role="dialog"' in response.data
+
+
+def test_accessibility_css_has_focus_and_reduced_motion_support():
+    stylesheet = (ROOT / "static" / "css" / "app.css").read_text(encoding="utf-8")
+
+    assert ":focus-visible" in stylesheet
+    assert "prefers-reduced-motion: reduce" in stylesheet
+    assert ".skip-link" in stylesheet
+    assert ".storage-warning" in stylesheet
+
+
+def test_frontend_handles_storage_failures_and_corrupt_data():
+    javascript = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
+
+    assert "storageWritesBlocked" in javascript
+    assert "storageAccessAvailable" in javascript
+    assert "setStorageWarning" in javascript
+    assert "normalizeStoredEntry" in javascript
+    assert "Saved BumpMarks data appears unreadable" in javascript
+
+
+def test_frontend_has_modal_focus_trap_and_background_inert():
+    javascript = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
+
+    assert "trapModalFocus" in javascript
+    assert "getFocusableElements" in javascript
+    assert "mainContent.inert = anyOpen" in javascript
+    assert "bottomNav.inert = anyOpen" in javascript
+    assert 'event.key === "Tab"' in javascript
+
+
+def test_frontend_refreshes_time_sensitive_state_after_resume():
+    javascript = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
+
+    assert "refreshTimeSensitiveUi" in javascript
+    assert 'window.addEventListener("focus", refreshTimeSensitiveUi)' in javascript
+    assert 'document.addEventListener("visibilitychange"' in javascript
+    assert "window.setInterval(refreshTimeSensitiveUi, 60_000)" in javascript

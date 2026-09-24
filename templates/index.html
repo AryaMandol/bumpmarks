@@ -19,7 +19,9 @@
 </head>
 <body>
 
-<main class="app-shell">
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<main id="main-content" class="app-shell" tabindex="-1">
 
     <header class="app-header">
         <div>
@@ -37,6 +39,9 @@
         <button id="apply-update" type="button">Refresh</button>
     </section>
 
+
+    <section id="storage-warning" class="storage-warning" role="alert" hidden></section>
+
     <section id="today-view" class="app-view">
         <section class="today-card">
             <div class="date-row">
@@ -51,12 +56,12 @@
             </div>
 
             <div class="count-area">
-                <div id="movement-count" class="movement-count" aria-live="polite">0</div>
+                <div id="movement-count" class="movement-count" role="status" aria-live="polite" aria-atomic="true">0</div>
                 <p class="movement-label">movements today</p>
                 <div id="tally" class="tally" aria-hidden="true"></div>
             </div>
 
-            <div id="target-progress" class="target-progress" hidden>
+            <div id="target-progress" class="target-progress" role="progressbar" aria-label="Daily target progress" aria-valuemin="0" hidden>
                 <div class="target-row">
                     <span>Daily target</span>
                     <strong id="target-progress-text">0 / 0</strong>
@@ -135,7 +140,7 @@
                 No movements recorded yet.
             </div>
 
-            <div id="recent-list" class="recent-list"></div>
+            <div id="recent-list" class="recent-list" aria-label="Today's movement entries"></div>
         </section>
     </section>
 
@@ -152,7 +157,7 @@
             No previous movement records yet.
         </div>
 
-        <div id="history-list" class="history-list"></div>
+        <div id="history-list" class="history-list" aria-label="Movement history by day"></div>
     </section>
 
 
@@ -325,6 +330,22 @@
         </button>
 
 
+
+        <section class="settings-card">
+            <div class="section-heading">
+                <h2>Privacy by design</h2>
+                <p>BumpMarks is deliberately built without third-party tracking.</p>
+            </div>
+
+            <ul class="privacy-list">
+                <li>No account or sign-in</li>
+                <li>No advertising or analytics SDKs</li>
+                <li>No movement data sent to BumpMarks servers</li>
+                <li>No camera, microphone, or location access</li>
+                <li>Your browser controls the local storage where records are kept</li>
+            </ul>
+        </section>
+
         <section class="settings-card">
             <div class="section-heading">
                 <h2>Install BumpMarks</h2>
@@ -369,7 +390,7 @@
 </main>
 
 <nav class="bottom-nav" aria-label="Primary navigation">
-    <button id="nav-today" class="nav-button active" type="button" data-view="today">
+    <button id="nav-today" class="nav-button active" type="button" data-view="today" aria-current="page">
         <span class="nav-icon" aria-hidden="true">●</span>
         <span>Today</span>
     </button>
@@ -390,10 +411,10 @@
     </button>
 </nav>
 
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <div id="catchup-modal" class="modal-backdrop" hidden>
-    <section class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="catchup-title">
+    <section class="modal-sheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="catchup-title">
         <div class="modal-handle" aria-hidden="true"></div>
 
         <div class="modal-header">
@@ -452,7 +473,7 @@
 </div>
 
 <div id="delete-modal" class="modal-backdrop" hidden>
-    <section class="modal-sheet compact-sheet" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+    <section class="modal-sheet compact-sheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="delete-title">
         <div class="modal-handle" aria-hidden="true"></div>
 
         <div class="modal-header">
@@ -474,7 +495,7 @@
 </div>
 
 <div id="day-detail-modal" class="modal-backdrop" hidden>
-    <section class="modal-sheet day-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="day-detail-title">
+    <section class="modal-sheet day-detail-sheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="day-detail-title">
         <div class="modal-handle" aria-hidden="true"></div>
 
         <div class="modal-header">
@@ -516,7 +537,7 @@
 
 
 <div id="restore-confirm-modal" class="modal-backdrop" hidden>
-    <section class="modal-sheet compact-sheet" role="dialog" aria-modal="true" aria-labelledby="restore-confirm-title">
+    <section class="modal-sheet compact-sheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="restore-confirm-title">
         <div class="modal-handle" aria-hidden="true"></div>
 
         <div class="modal-header">
@@ -538,7 +559,7 @@
 </div>
 
 <div id="delete-all-modal" class="modal-backdrop" hidden>
-    <section class="modal-sheet compact-sheet" role="dialog" aria-modal="true" aria-labelledby="delete-all-title">
+    <section class="modal-sheet compact-sheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="delete-all-title">
         <div class="modal-handle" aria-hidden="true"></div>
 
         <div class="modal-header">
