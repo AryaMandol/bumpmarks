@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#faf8f5">
+    <meta name="description" content="BumpMarks - private, simple baby movement tracking.">
+
+    <title>BumpMarks</title>
+
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+    <link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+
+<main class="app-shell">
+
+    <header class="app-header">
+        <div>
+            <p class="brand">BumpMarks</p>
+            <p class="tagline">Private baby movement log</p>
+        </div>
+    </header>
+
+    <section class="today-card">
+        <div class="date-row">
+            <div>
+                <p class="eyebrow">TODAY</p>
+                <h1 id="today-date">Today</h1>
+            </div>
+
+            <div id="tracking-status" class="tracking-status">
+                12 PM - 12 AM
+            </div>
+        </div>
+
+        <div class="count-area">
+            <div id="movement-count" class="movement-count" aria-live="polite">0</div>
+            <p class="movement-label">movements today</p>
+            <div id="tally" class="tally" aria-hidden="true"></div>
+        </div>
+
+        <button id="movement-button" class="movement-button" type="button">
+            <span class="plus">+</span>
+            Baby Moved
+        </button>
+
+        <button id="undo-button" class="undo-button" type="button" disabled>
+            Undo last
+        </button>
+    </section>
+
+    <section class="catchup-card">
+        <div class="section-heading">
+            <div>
+                <h2>Forgot to record?</h2>
+                <p>Add movements you remembered later.</p>
+            </div>
+        </div>
+
+        <div class="catchup-buttons">
+            <button class="catchup-button" data-count="1" type="button">+1</button>
+            <button class="catchup-button" data-count="2" type="button">+2</button>
+            <button class="catchup-button" data-count="3" type="button">+3</button>
+            <button class="catchup-button" data-count="5" type="button">+5</button>
+            <button id="custom-catchup-button" class="catchup-button catchup-other" type="button">Other</button>
+        </div>
+    </section>
+
+    <section class="recent-card">
+        <div class="section-heading">
+            <div>
+                <h2>Recent</h2>
+                <p>Today's latest entries.</p>
+            </div>
+        </div>
+
+        <div id="empty-state" class="empty-state">
+            No movements recorded yet.
+        </div>
+
+        <div id="recent-list" class="recent-list"></div>
+    </section>
+
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
