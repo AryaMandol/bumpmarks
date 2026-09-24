@@ -269,7 +269,7 @@ def test_update_banner_is_present():
 def test_service_worker_has_offline_and_update_handling():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v7";' in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v8";' in service_worker
     assert '"/offline"' in service_worker
     assert 'event.request.mode === "navigate"' in service_worker
     assert '"SKIP_WAITING"' in service_worker
@@ -366,3 +366,81 @@ def test_frontend_refreshes_time_sensitive_state_after_resume():
     assert 'window.addEventListener("focus", refreshTimeSensitiveUi)' in javascript
     assert 'document.addEventListener("visibilitychange"' in javascript
     assert "window.setInterval(refreshTimeSensitiveUi, 60_000)" in javascript
+
+
+def test_analytics_view_and_navigation_are_present():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'id="analytics-view"' in response.data
+    assert b'id="nav-analytics"' in response.data
+    assert b'id="analytics-user-mode"' in response.data
+    assert b'id="analytics-doctor-mode"' in response.data
+
+
+def test_analytics_filters_and_chart_options_are_present():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'id="analytics-start-date"' in response.data
+    assert b'id="analytics-end-date"' in response.data
+    assert b'data-analytics-days="7"' in response.data
+    assert b'data-analytics-days="14"' in response.data
+    assert b'data-analytics-days="30"' in response.data
+    assert b'data-analytics-days="all"' in response.data
+    assert b'value="daily-total"' in response.data
+    assert b'value="entry-mix"' in response.data
+    assert b'value="time-of-day"' in response.data
+
+
+def test_doctor_view_table_and_print_control_are_present():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'id="doctor-view-panel"' in response.data
+    assert b'id="doctor-table-body"' in response.data
+    assert b'id="doctor-range-summary"' in response.data
+    assert b'id="print-doctor-view"' in response.data
+    assert b'Live recording span' in response.data
+
+
+def test_analytics_logic_is_local_and_descriptive():
+    javascript = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
+
+    assert "renderAnalytics" in javascript
+    assert "getAnalyticsSummary" in javascript
+    assert "renderAnalyticsChart" in javascript
+    assert "renderDoctorTable" in javascript
+    assert "getLiveEntryTimeRange" in javascript
+    assert "fetch(" not in javascript
+
+
+def test_analytics_does_not_invent_catchup_occurrence_times():
+    javascript = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
+
+    assert 'entry.type !== "catchup"' in javascript
+    assert "Catch-up entries are excluded" in javascript
+    assert "missing day is not treated as zero" in javascript.lower()
+
+
+def test_readme_is_generic_and_has_no_private_development_path():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "D:\\\\Arya" not in readme
+    assert "Project Location" not in readme
+    assert "python app.py" in readme
+    assert "User view" in readme
+    assert "Doctor view" in readme
+    assert "No third-party tracking analytics" in readme
+
+
+def test_analytics_css_includes_mobile_and_print_support():
+    stylesheet = (ROOT / "static" / "css" / "app.css").read_text(encoding="utf-8")
+
+    assert ".analytics-summary-grid" in stylesheet
+    assert ".doctor-table-wrap" in stylesheet
+    assert "@media print" in stylesheet
+    assert ".nav-analytics-icon" in stylesheet

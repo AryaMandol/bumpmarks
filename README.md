@@ -1,174 +1,203 @@
 # BumpMarks
 
-BumpMarks is a small, privacy-first baby movement logging PWA.
+BumpMarks is a small, privacy-first Progressive Web App for recording baby movements.
 
 > Record movements when you can. Catch up when you can't.
 
-## Principles
+BumpMarks is intentionally focused. It is a logging utility, not a pregnancy platform, medical device, diagnostic tool, or fetal wellbeing assessment system.
 
+## Features
+
+- One-tap live movement recording
+- Catch-up entries for movements remembered later
+- Approximate timing for catch-up entries
+- Undo, edit, and delete entry controls
+- Visual tally marks
+- Configurable tracking window
+- Optional daily target
+- Optional daily notes
+- History with daily detail
+- User and doctor analytics views
+- Local charts for recorded totals, live vs catch-up entries, and live-entry time-of-day distribution
+- CSV export
+- Full JSON backup and restore
+- PWA installation and offline support
+- Local-only data storage
 - No account required
 - No advertising
+- No third-party tracking analytics
 - No AI
-- No analytics
-- No cloud requirement
-- Movement data stays on the user's device
-- Works offline
-- Open source
-- Not a diagnostic or medical decision-making tool
 
-## Project Location
+## Privacy
 
-```text
-D:\Arya\Dev\bumpmarks
+BumpMarks stores movement records, notes, preferences, and settings in the browser's local storage.
+
+The Flask application serves the app shell. Movement data is not submitted to the Flask server.
+
+Analytics inside BumpMarks are calculated locally from the user's own stored records. BumpMarks does not include third-party analytics or advertising SDKs.
+
+Browser security headers additionally restrict access to camera, microphone, geolocation, payment, and USB capabilities.
+
+Users can export their records, create a local backup, restore a backup, or delete all locally stored BumpMarks data.
+
+## Analytics
+
+The Analytics screen contains two presentation modes.
+
+### User view
+
+Designed for simple personal review with:
+
+- 7-day, 14-day, 30-day, all-data, and custom date ranges
+- Recorded totals by logged day
+- Live vs catch-up entry chart
+- Live entries by time-of-day chart
+- All, live-only, and catch-up-only entry filters where applicable
+- Summary counts for logged days and recorded entries
+
+### Doctor view
+
+Uses the same selected date range and adds a compact factual table containing:
+
+- Date
+- Recorded total
+- Live count
+- Catch-up count
+- Live recording span
+- Daily note
+
+Doctor View can be printed from the browser.
+
+Analytics are descriptive only. Missing days are not treated as zero movements, catch-up entries do not receive invented occurrence timestamps, and the app does not classify any pattern as normal or abnormal.
+
+## Development
+
+### Requirements
+
+- Python 3.11 or newer
+- A modern browser
+
+### Install dependencies
+
+```bash
+python -m pip install -r requirements.txt
 ```
 
-## Setup
-
-First-time dependency setup:
+On Windows, the included helper can also be used:
 
 ```cmd
-cd /d D:\Arya\Dev\bumpmarks
 setup.cmd
 ```
 
-## Tests
+### Run tests
+
+```bash
+python -m pytest -v
+```
+
+Or on Windows:
 
 ```cmd
-cd /d D:\Arya\Dev\bumpmarks
 test.cmd
 ```
 
-## Run
+### Run locally
 
-```cmd
-cd /d D:\Arya\Dev\bumpmarks
+```bash
 python app.py
 ```
 
-Open:
+Then open:
 
 ```text
 http://127.0.0.1:5000
 ```
 
-## Current Milestones
+`localhost` and `127.0.0.1` are treated as secure development origins by modern browsers, which allows local PWA testing.
 
-### BM-001 - Complete
+## Data model
 
-- Flask/PWA bootstrap
-- Live movement logging
-- Tally display
-- Local browser storage
-- Basic catch-up
-- Undo
-- Offline shell
+The current V1 stores data under the browser local-storage key:
 
-### BM-002 - Complete
+```text
+bumpmarks.v1
+```
 
-- Proper catch-up bottom sheet
-- Catch-up count stepper
-- Approximate timing choices
-- Edit catch-up entries
-- Delete entries with confirmation
-- Existing BM-001 data compatibility
+Existing V1 releases preserve this storage key for backward compatibility.
 
-### BM-003 - Complete
+A day's data can contain:
 
-- Today / History navigation
-- History ordered by date
-- Daily totals
-- Live vs catch-up breakdown
-- Day-detail sheet
-- Full day entry timeline
-- Optional daily notes
-- Local auto-save notes
+- Movement entries
+- Entry type: live or catch-up
+- Recorded timestamp
+- Approximate catch-up timing
+- Optional daily note
 
-### BM-004 - Complete in this version
+Application settings are stored alongside the day records.
 
-- Settings tab
-- Configurable tracking start and end time
-- Supports tracking windows that cross midnight
-- Optional daily movement target
-- Target progress on Today screen
-- Haptic feedback on/off
-- Local doctor-instructions note
-- Doctor instructions displayed on Today when configured
-- Validation for settings
-- Existing BM-001/BM-002/BM-003 local data remains compatible
+## Backup and restore
 
-## Privacy
+BumpMarks can create a JSON backup containing the complete local application state.
 
-Movement information, notes, and settings are stored using browser local storage.
+Restore validates the backup structure before replacing local data.
 
-The current application does not send movement records, notes, or settings to the Flask server.
+CSV export is intended for readable review in spreadsheet software and includes protection against spreadsheet formula injection from user-entered text.
 
-## Medical Disclaimer
+## PWA behavior
 
-BumpMarks is a recording tool only.
+BumpMarks includes:
 
-It does not assess fetal wellbeing, diagnose medical conditions, determine whether a movement pattern is normal or abnormal, or replace guidance from a qualified healthcare professional.
-
-
-### BM-005 - Complete in this version
-
-- Export tab
-- CSV export for a selected date range
-- CSV includes entry type, count, recorded timestamp, approximate catch-up timing, and daily note
-- CSV formula-injection protection for user-entered text
-- Full JSON backup of movement history, notes, and settings
-- Strict local validation before restore
-- Restore confirmation before replacing current local data
-- Delete-all-data confirmation
-- Delete all movement history, notes, and settings from browser local storage
-- No export, backup, or restore file is uploaded to the Flask server
-
-
-### BM-006 - Complete in this version
-
-- Hardened PWA manifest with app id, scope, portrait orientation, categories, and maskable icon
-- Apple touch icon and iOS PWA metadata
-- Install button for browsers that expose the PWA install prompt
-- iPhone/iPad Add to Home Screen guidance
-- Installed-app detection
-- Service-worker update detection with user-controlled refresh
+- Web app manifest
+- Standard and maskable icons
+- Apple touch icon
+- Offline app-shell caching
 - Offline navigation fallback
-- Cache cleanup between app versions
-- Mobile safe-area and very-small-screen layout hardening
-- Honest V1 reminder policy: no unreliable browser-only scheduled reminders
-- Background reminder delivery deferred until a reliable cross-platform approach is chosen
+- Service-worker update detection
+- Install guidance for supported browsers
+- Mobile safe-area handling
 
-## Reminder Decision
+## Reminders
 
-BumpMarks V1 does not schedule background reminders.
+BumpMarks V1 does not provide background scheduled reminders.
 
-Browser-only timers and notifications are not reliable enough across Android, iOS, browser, and installed-PWA states for a movement-tracking utility. The app will not claim to provide a reminder unless it can do so predictably.
+Reliable notification behavior differs across browsers, mobile operating systems, and installed-PWA states. BumpMarks does not present an unreliable browser timer as a dependable reminder feature.
 
+## Accessibility
 
-### BM-007 - Complete in this version
+The interface includes:
 
-- Privacy/security response headers
-- Content Security Policy limiting resources to BumpMarks itself
-- Referrer suppression
-- Camera, microphone, geolocation, payment, and USB browser permissions disabled by policy
-- Service worker served with no-cache update semantics
+- Keyboard-visible focus states
 - Skip-to-content navigation
-- Visible keyboard focus states
+- Modal focus trapping and focus restoration
 - Reduced-motion support
-- Better touch targets
-- Modal focus trapping and background inert state
-- Focus restoration after dialogs close
-- Screen-reader status improvements and ARIA progress state
-- Accessible active-tab state
-- Local-storage access failure warning
-- Corrupt/unreadable local data protection without silently overwriting it
-- Stored-entry sanitization before use
-- Date/tracking-window refresh when the app resumes or remains open across time changes
-- Expanded automated privacy, accessibility, storage-resilience, and lifecycle checks
+- Screen-reader status announcements
+- Accessible active-navigation states
+- Larger touch targets
+- Accessible progress information
 
-## Privacy Architecture
+## Security
 
-BumpMarks does not require an account and does not include third-party analytics or advertising SDKs.
+The Flask server applies response headers including:
 
-The Flask server serves the application shell. Movement entries, notes, settings, backups, and restore operations remain browser-side in V1.
+- Content Security Policy
+- Referrer Policy
+- X-Content-Type-Options
+- X-Frame-Options
+- Permissions Policy
+- Cross-Origin-Opener-Policy
 
-Security headers additionally instruct supported browsers not to grant the app camera, microphone, geolocation, payment, or USB capabilities.
+The service worker is served with `no-cache` semantics so browsers can detect new versions.
+
+## Medical disclaimer
+
+BumpMarks is a recording and visualization tool only.
+
+It does not assess fetal wellbeing, diagnose medical conditions, determine whether a movement pattern is normal or abnormal, provide emergency guidance, or replace instructions from a qualified healthcare professional.
+
+Users should follow the movement-counting method and medical guidance provided by their own healthcare professional.
+
+## Open source
+
+BumpMarks is intended to be an open-source project.
+
+Licensing, contribution guidelines, security reporting instructions, production deployment documentation, and the first formal release are finalized as part of the release preparation milestone.

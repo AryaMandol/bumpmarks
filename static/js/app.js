@@ -52,10 +52,33 @@ const doctorInstructionsDisplay = document.getElementById("doctor-instructions-d
 const todayView = document.getElementById("today-view");
 const historyView = document.getElementById("history-view");
 const settingsView = document.getElementById("settings-view");
+const analyticsView = document.getElementById("analytics-view");
 const navTodayButton = document.getElementById("nav-today");
 const navHistoryButton = document.getElementById("nav-history");
+const navAnalyticsButton = document.getElementById("nav-analytics");
 const navExportButton = document.getElementById("nav-export");
 const navSettingsButton = document.getElementById("nav-settings");
+
+
+const analyticsUserModeButton = document.getElementById("analytics-user-mode");
+const analyticsDoctorModeButton = document.getElementById("analytics-doctor-mode");
+const analyticsStartDate = document.getElementById("analytics-start-date");
+const analyticsEndDate = document.getElementById("analytics-end-date");
+const analyticsChartType = document.getElementById("analytics-chart-type");
+const analyticsEntryType = document.getElementById("analytics-entry-type");
+const analyticsFilterNote = document.getElementById("analytics-filter-note");
+const analyticsDaysLogged = document.getElementById("analytics-days-logged");
+const analyticsTotalRecorded = document.getElementById("analytics-total-recorded");
+const analyticsLiveRecorded = document.getElementById("analytics-live-recorded");
+const analyticsCatchupRecorded = document.getElementById("analytics-catchup-recorded");
+const analyticsChartTitle = document.getElementById("analytics-chart-title");
+const analyticsChartDescription = document.getElementById("analytics-chart-description");
+const analyticsChart = document.getElementById("analytics-chart");
+const analyticsEmpty = document.getElementById("analytics-empty");
+const doctorViewPanel = document.getElementById("doctor-view-panel");
+const doctorRangeSummary = document.getElementById("doctor-range-summary");
+const doctorTableBody = document.getElementById("doctor-table-body");
+const printDoctorViewButton = document.getElementById("print-doctor-view");
 
 const exportView = document.getElementById("export-view");
 const exportStartDate = document.getElementById("export-start-date");
@@ -122,6 +145,8 @@ let storageWritesBlocked = false;
 let storageWarningMessage = "";
 let lastModalTrigger = null;
 let lastRenderedDateKey = null;
+let analyticsMode = "user";
+let analyticsPreset = "7";
 
 
 
@@ -768,23 +793,27 @@ function syncBodyModalState() {
 
 function setActiveView(viewName) {
     const showHistory = viewName === "history";
+    const showAnalytics = viewName === "analytics";
     const showExport = viewName === "export";
     const showSettings = viewName === "settings";
-    const showToday = !showHistory && !showExport && !showSettings;
+    const showToday = !showHistory && !showAnalytics && !showExport && !showSettings;
 
     todayView.hidden = !showToday;
     historyView.hidden = !showHistory;
+    analyticsView.hidden = !showAnalytics;
     exportView.hidden = !showExport;
     settingsView.hidden = !showSettings;
 
     navTodayButton.classList.toggle("active", showToday);
     navHistoryButton.classList.toggle("active", showHistory);
+    navAnalyticsButton.classList.toggle("active", showAnalytics);
     navExportButton.classList.toggle("active", showExport);
     navSettingsButton.classList.toggle("active", showSettings);
 
     [
         [navTodayButton, showToday],
         [navHistoryButton, showHistory],
+        [navAnalyticsButton, showAnalytics],
         [navExportButton, showExport],
         [navSettingsButton, showSettings]
     ].forEach(([button, active]) => {
@@ -797,6 +826,10 @@ function setActiveView(viewName) {
 
     if (showHistory) {
         renderHistory();
+    }
+
+    if (showAnalytics) {
+        renderAnalytics();
     }
 
     if (showExport) {
@@ -1839,6 +1872,550 @@ function renderHistory() {
 }
 
 
+
+function analyticsDateKeyOffset(daysBack) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - daysBack);
+    return getLocalDateKey(date);
+}
+
+
+function setAnalyticsPreset(days) {
+    analyticsPreset = String(days);
+
+    document
+        .querySelectorAll("[data-analytics-days]")
+        .forEach(button => {
+            button.classList.toggle(
+                "active",
+                button.dataset.analyticsDays === analyticsPreset
+            );
+        });
+
+    const keys = getHistoryKeys().sort();
+    const todayKey = getLocalDateKey();
+
+    if (analyticsPreset === "all") {
+        analyticsStartDate.value = keys.length ? keys[0] : todayKey;
+        analyticsEndDate.value = todayKey;
+    } else {
+        const totalDays = Number(analyticsPreset);
+        analyticsStartDate.value = analyticsDateKeyOffset(Math.max(0, totalDays - 1));
+        analyticsEndDate.value = todayKey;
+    }
+
+    renderAnalytics();
+}
+
+
+function clearAnalyticsPreset() {
+    analyticsPreset = "custom";
+
+    document
+        .querySelectorAll("[data-analytics-days]")
+        .forEach(button => {
+            button.classList.remove("active");
+        });
+}
+
+
+function getAnalyticsRange() {
+    let start = analyticsStartDate.value;
+    let end = analyticsEndDate.value;
+
+    if (!start || !end) {
+        setAnalyticsPreset("7");
+        start = analyticsStartDate.value;
+        end = analyticsEndDate.value;
+    }
+
+    if (start > end) {
+        const swap = start;
+        start = end;
+        end = swap;
+
+        analyticsStartDate.value = start;
+        analyticsEndDate.value = end;
+    }
+
+    return {
+        start,
+        end
+    };
+}
+
+
+function getAnalyticsDays() {
+    const range = getAnalyticsRange();
+
+    return getHistoryKeys()
+        .filter(dateKey => dateKey >= range.start && dateKey <= range.end)
+        .sort()
+        .map(dateKey => ({
+            dateKey,
+            day: getDayData(dateKey)
+        }))
+        .filter(item => item.day);
+}
+
+
+function filterAnalyticsEntries(day) {
+    const filter = analyticsEntryType.value;
+
+    if (filter === "live") {
+        return day.entries.filter(entry => entry.type !== "catchup");
+    }
+
+    if (filter === "catchup") {
+        return day.entries.filter(entry => entry.type === "catchup");
+    }
+
+    return day.entries;
+}
+
+
+function getAnalyticsSummary(days) {
+    return days.reduce(
+        (summary, item) => {
+            if (item.day.entries.length > 0) {
+                summary.daysLogged += 1;
+            }
+
+            item.day.entries.forEach(entry => {
+                const count = Number(entry.count || 0);
+
+                summary.total += count;
+
+                if (entry.type === "catchup") {
+                    summary.catchup += count;
+                } else {
+                    summary.live += count;
+                }
+            });
+
+            return summary;
+        },
+        {
+            daysLogged: 0,
+            total: 0,
+            live: 0,
+            catchup: 0
+        }
+    );
+}
+
+
+function shortAnalyticsDate(dateKey) {
+    return new Intl.DateTimeFormat(
+        undefined,
+        {
+            day: "numeric",
+            month: "short"
+        }
+    ).format(dateFromKey(dateKey));
+}
+
+
+function createVerticalBarChart(rows, mode = "single") {
+    const shell = document.createElement("div");
+    shell.className = "chart-shell";
+
+    const bars = document.createElement("div");
+    bars.className = "chart-bars";
+
+    const maxValue = Math.max(
+        1,
+        ...rows.map(row => {
+            if (mode === "stacked") {
+                return Number(row.live || 0) + Number(row.catchup || 0);
+            }
+
+            return Number(row.value || 0);
+        })
+    );
+
+    rows.forEach(row => {
+        const column = document.createElement("div");
+        column.className = "chart-bar-column";
+
+        const value = document.createElement("div");
+        value.className = "chart-bar-value";
+
+        const stack = document.createElement("div");
+        stack.className = "chart-bar-stack";
+
+        if (mode === "stacked") {
+            const total = Number(row.live || 0) + Number(row.catchup || 0);
+            value.textContent = total;
+
+            if (row.catchup > 0) {
+                const catchup = document.createElement("div");
+                catchup.className = "chart-bar-segment secondary";
+                catchup.style.height = `${Math.max(3, (row.catchup / maxValue) * 100)}%`;
+                catchup.title = `Catch-up: ${row.catchup}`;
+                stack.appendChild(catchup);
+            }
+
+            if (row.live > 0) {
+                const live = document.createElement("div");
+                live.className = "chart-bar-segment";
+                live.style.height = `${Math.max(3, (row.live / maxValue) * 100)}%`;
+                live.title = `Live: ${row.live}`;
+                stack.appendChild(live);
+            }
+        } else {
+            value.textContent = row.value;
+
+            const segment = document.createElement("div");
+            segment.className = "chart-bar-segment";
+            segment.style.height =
+                row.value > 0
+                    ? `${Math.max(3, (row.value / maxValue) * 100)}%`
+                    : "0%";
+            segment.title = `${row.label}: ${row.value}`;
+            stack.appendChild(segment);
+        }
+
+        const label = document.createElement("div");
+        label.className = "chart-bar-label";
+        label.textContent = row.label;
+
+        column.appendChild(value);
+        column.appendChild(stack);
+        column.appendChild(label);
+        bars.appendChild(column);
+    });
+
+    shell.appendChild(bars);
+
+    if (mode === "stacked") {
+        const legend = document.createElement("div");
+        legend.className = "analytics-legend";
+
+        const liveLegend = document.createElement("span");
+        liveLegend.className = "analytics-legend-item";
+        liveLegend.innerHTML =
+            '<span class="analytics-legend-swatch"></span><span>Live</span>';
+
+        const catchupLegend = document.createElement("span");
+        catchupLegend.className = "analytics-legend-item";
+        catchupLegend.innerHTML =
+            '<span class="analytics-legend-swatch secondary"></span><span>Catch-up</span>';
+
+        legend.appendChild(liveLegend);
+        legend.appendChild(catchupLegend);
+        shell.appendChild(legend);
+    }
+
+    return shell;
+}
+
+
+function createHorizontalBarChart(rows) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "chart-horizontal";
+
+    const maxValue = Math.max(1, ...rows.map(row => Number(row.value || 0)));
+
+    rows.forEach(row => {
+        const line = document.createElement("div");
+        line.className = "chart-horizontal-row";
+
+        const label = document.createElement("div");
+        label.className = "chart-horizontal-label";
+        label.textContent = row.label;
+
+        const track = document.createElement("div");
+        track.className = "chart-horizontal-track";
+
+        const fill = document.createElement("div");
+        fill.className = "chart-horizontal-fill";
+        fill.style.width =
+            row.value > 0
+                ? `${Math.max(2, (row.value / maxValue) * 100)}%`
+                : "0%";
+
+        const value = document.createElement("div");
+        value.className = "chart-horizontal-value";
+        value.textContent = row.value;
+
+        track.appendChild(fill);
+        line.appendChild(label);
+        line.appendChild(track);
+        line.appendChild(value);
+        wrapper.appendChild(line);
+    });
+
+    return wrapper;
+}
+
+
+function getLiveEntryTimeRange(day) {
+    const liveEntries = day.entries
+        .filter(entry => entry.type !== "catchup" && entry.recordedAt)
+        .map(entry => new Date(entry.recordedAt))
+        .filter(date => !Number.isNaN(date.getTime()))
+        .sort((a, b) => a - b);
+
+    if (liveEntries.length === 0) {
+        return "—";
+    }
+
+    const first = formatTime(liveEntries[0].toISOString());
+    const last = formatTime(liveEntries[liveEntries.length - 1].toISOString());
+
+    return first === last ? first : `${first} - ${last}`;
+}
+
+
+function renderDoctorTable(days) {
+    doctorTableBody.innerHTML = "";
+
+    const range = getAnalyticsRange();
+
+    doctorRangeSummary.textContent =
+        `${formatHistoryDate(range.start)} to ${formatHistoryDate(range.end)} · ` +
+        `${days.filter(item => item.day.entries.length > 0).length} logged day(s).`;
+
+    const rows = [...days].reverse();
+
+    if (rows.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = 6;
+        cell.textContent = "No recorded data in the selected period.";
+
+        row.appendChild(cell);
+        doctorTableBody.appendChild(row);
+        return;
+    }
+
+    rows.forEach(item => {
+        const breakdown = getEntryBreakdown(item.day);
+        const total = getDayTotal(item.day);
+        const row = document.createElement("tr");
+
+        const values = [
+            formatHistoryCardDate(item.dateKey),
+            total,
+            breakdown.live,
+            breakdown.catchup,
+            getLiveEntryTimeRange(item.day),
+            item.day.note || "—"
+        ];
+
+        values.forEach((value, index) => {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+
+            if (index === 5) {
+                cell.className = "doctor-note-cell";
+            }
+
+            row.appendChild(cell);
+        });
+
+        doctorTableBody.appendChild(row);
+    });
+}
+
+
+function renderAnalyticsChart(days) {
+    analyticsChart.innerHTML = "";
+    analyticsEmpty.hidden = true;
+
+    const chartType = analyticsChartType.value;
+
+    if (chartType === "daily-total") {
+        analyticsChartTitle.textContent = "Recorded totals by day";
+        analyticsChartDescription.textContent =
+            "Logged days only. A missing day is not treated as zero movement.";
+        analyticsEntryType.disabled = false;
+        analyticsFilterNote.textContent =
+            analyticsEntryType.value === "all"
+                ? "Showing all recorded entries."
+                : analyticsEntryType.value === "live"
+                    ? "Showing live entries only."
+                    : "Showing catch-up entries only.";
+
+        const rows = days
+            .map(item => ({
+                label: shortAnalyticsDate(item.dateKey),
+                value: filterAnalyticsEntries(item.day).reduce(
+                    (total, entry) => total + Number(entry.count || 0),
+                    0
+                )
+            }))
+            .filter(row => row.value > 0);
+
+        if (rows.length === 0) {
+            analyticsEmpty.hidden = false;
+            return;
+        }
+
+        analyticsChart.appendChild(
+            createVerticalBarChart(rows, "single")
+        );
+        return;
+    }
+
+    if (chartType === "entry-mix") {
+        analyticsChartTitle.textContent = "Live vs catch-up";
+        analyticsChartDescription.textContent =
+            "Shows how each logged day's recorded total was entered.";
+        analyticsEntryType.disabled = true;
+        analyticsFilterNote.textContent =
+            "This chart always displays both live and catch-up entries.";
+
+        const rows = days
+            .map(item => {
+                const breakdown = getEntryBreakdown(item.day);
+
+                return {
+                    label: shortAnalyticsDate(item.dateKey),
+                    live: breakdown.live,
+                    catchup: breakdown.catchup
+                };
+            })
+            .filter(row => row.live + row.catchup > 0);
+
+        if (rows.length === 0) {
+            analyticsEmpty.hidden = false;
+            return;
+        }
+
+        analyticsChart.appendChild(
+            createVerticalBarChart(rows, "stacked")
+        );
+        return;
+    }
+
+    analyticsChartTitle.textContent = "Live entries by time of day";
+    analyticsChartDescription.textContent =
+        "Uses exact timestamps from live entries only. Catch-up entries are excluded because their actual movement times are approximate.";
+    analyticsEntryType.disabled = true;
+    analyticsFilterNote.textContent =
+        "Time-of-day charts use live entries only.";
+
+    const buckets = [
+        {
+            label: "12 AM - 6 AM",
+            start: 0,
+            end: 6,
+            value: 0
+        },
+        {
+            label: "6 AM - 12 PM",
+            start: 6,
+            end: 12,
+            value: 0
+        },
+        {
+            label: "12 PM - 6 PM",
+            start: 12,
+            end: 18,
+            value: 0
+        },
+        {
+            label: "6 PM - 12 AM",
+            start: 18,
+            end: 24,
+            value: 0
+        }
+    ];
+
+    days.forEach(item => {
+        item.day.entries
+            .filter(entry => entry.type !== "catchup")
+            .forEach(entry => {
+                const date = new Date(entry.recordedAt);
+
+                if (Number.isNaN(date.getTime())) {
+                    return;
+                }
+
+                const bucket = buckets.find(
+                    candidate =>
+                        date.getHours() >= candidate.start &&
+                        date.getHours() < candidate.end
+                );
+
+                if (bucket) {
+                    bucket.value += Number(entry.count || 0);
+                }
+            });
+    });
+
+    const total = buckets.reduce(
+        (sum, bucket) => sum + bucket.value,
+        0
+    );
+
+    if (total === 0) {
+        analyticsEmpty.hidden = false;
+        return;
+    }
+
+    analyticsChart.appendChild(
+        createHorizontalBarChart(buckets)
+    );
+}
+
+
+function renderAnalytics() {
+    if (!analyticsStartDate.value || !analyticsEndDate.value) {
+        const keys = getHistoryKeys().sort();
+        const todayKey = getLocalDateKey();
+
+        analyticsStartDate.value =
+            keys.length
+                ? analyticsDateKeyOffset(6)
+                : todayKey;
+        analyticsEndDate.value = todayKey;
+    }
+
+    const days = getAnalyticsDays();
+    const summary = getAnalyticsSummary(days);
+
+    analyticsDaysLogged.textContent = summary.daysLogged;
+    analyticsTotalRecorded.textContent = summary.total;
+    analyticsLiveRecorded.textContent = summary.live;
+    analyticsCatchupRecorded.textContent = summary.catchup;
+
+    const doctorMode = analyticsMode === "doctor";
+
+    analyticsUserModeButton.classList.toggle("active", !doctorMode);
+    analyticsDoctorModeButton.classList.toggle("active", doctorMode);
+    analyticsUserModeButton.setAttribute(
+        "aria-pressed",
+        String(!doctorMode)
+    );
+    analyticsDoctorModeButton.setAttribute(
+        "aria-pressed",
+        String(doctorMode)
+    );
+
+    doctorViewPanel.hidden = !doctorMode;
+
+    renderAnalyticsChart(days);
+
+    if (doctorMode) {
+        renderDoctorTable(days);
+    }
+}
+
+
+function setAnalyticsMode(mode) {
+    analyticsMode = mode === "doctor"
+        ? "doctor"
+        : "user";
+
+    renderAnalytics();
+}
+
+
 function createSummaryStat(value, label) {
     const wrapper = document.createElement("div");
     wrapper.className = "summary-stat";
@@ -2105,6 +2682,7 @@ dayDetailModal.addEventListener("click", event => {
 
 navTodayButton.addEventListener("click", () => setActiveView("today"));
 navHistoryButton.addEventListener("click", () => setActiveView("history"));
+navAnalyticsButton.addEventListener("click", () => setActiveView("analytics"));
 navExportButton.addEventListener("click", () => setActiveView("export"));
 navSettingsButton.addEventListener("click", () => setActiveView("settings"));
 
@@ -2135,6 +2713,44 @@ deleteAllModal.addEventListener("click", event => {
     if (event.target === deleteAllModal) {
         closeDeleteAllConfirm();
     }
+});
+
+
+analyticsUserModeButton.addEventListener("click", () => {
+    setAnalyticsMode("user");
+});
+
+analyticsDoctorModeButton.addEventListener("click", () => {
+    setAnalyticsMode("doctor");
+});
+
+document
+    .querySelectorAll("[data-analytics-days]")
+    .forEach(button => {
+        button.addEventListener("click", () => {
+            setAnalyticsPreset(button.dataset.analyticsDays);
+        });
+    });
+
+analyticsStartDate.addEventListener("change", () => {
+    clearAnalyticsPreset();
+    renderAnalytics();
+});
+
+analyticsEndDate.addEventListener("change", () => {
+    clearAnalyticsPreset();
+    renderAnalytics();
+});
+
+analyticsChartType.addEventListener("change", renderAnalytics);
+analyticsEntryType.addEventListener("change", renderAnalytics);
+
+printDoctorViewButton.addEventListener("click", () => {
+    if (analyticsMode !== "doctor") {
+        setAnalyticsMode("doctor");
+    }
+
+    window.print();
 });
 
 todayNoteInput.addEventListener("input", scheduleTodayNoteSave);
@@ -2209,6 +2825,7 @@ renderDate();
 render();
 renderSettingsForm();
 renderExportForm();
+setAnalyticsPreset("7");
 setActiveView("today");
 lastRenderedDateKey = getLocalDateKey();
 

@@ -161,6 +161,148 @@
     </section>
 
 
+
+    <section id="analytics-view" class="app-view" hidden>
+        <section class="analytics-header">
+            <div>
+                <p class="eyebrow">ANALYTICS</p>
+                <h1>Recorded movement patterns</h1>
+                <p>Local charts from your BumpMarks records. These are descriptive only and do not assess fetal wellbeing.</p>
+            </div>
+        </section>
+
+        <section class="analytics-controls-card">
+            <div class="analytics-view-switch" role="group" aria-label="Analytics view">
+                <button id="analytics-user-mode" class="analytics-mode-button active" type="button" aria-pressed="true">
+                    User view
+                </button>
+                <button id="analytics-doctor-mode" class="analytics-mode-button" type="button" aria-pressed="false">
+                    Doctor view
+                </button>
+            </div>
+
+            <div class="analytics-filter-block">
+                <span class="analytics-filter-label">Date range</span>
+                <div class="analytics-preset-row" role="group" aria-label="Quick date range">
+                    <button class="analytics-preset active" type="button" data-analytics-days="7">7 days</button>
+                    <button class="analytics-preset" type="button" data-analytics-days="14">14 days</button>
+                    <button class="analytics-preset" type="button" data-analytics-days="30">30 days</button>
+                    <button class="analytics-preset" type="button" data-analytics-days="all">All</button>
+                </div>
+
+                <div class="settings-grid analytics-date-grid">
+                    <label class="settings-field">
+                        <span>From</span>
+                        <input id="analytics-start-date" type="date">
+                    </label>
+
+                    <label class="settings-field">
+                        <span>To</span>
+                        <input id="analytics-end-date" type="date">
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-grid analytics-select-grid">
+                <label class="settings-field">
+                    <span>Chart</span>
+                    <select id="analytics-chart-type">
+                        <option value="daily-total">Recorded totals by day</option>
+                        <option value="entry-mix">Live vs catch-up</option>
+                        <option value="time-of-day">Live entries by time of day</option>
+                    </select>
+                </label>
+
+                <label class="settings-field">
+                    <span>Include</span>
+                    <select id="analytics-entry-type">
+                        <option value="all">All entries</option>
+                        <option value="live">Live only</option>
+                        <option value="catchup">Catch-up only</option>
+                    </select>
+                </label>
+            </div>
+
+            <p id="analytics-filter-note" class="analytics-filter-note"></p>
+        </section>
+
+        <section class="analytics-summary-grid" aria-label="Analytics summary">
+            <article class="analytics-stat">
+                <span class="analytics-stat-value" id="analytics-days-logged">0</span>
+                <span class="analytics-stat-label">Days logged</span>
+            </article>
+
+            <article class="analytics-stat">
+                <span class="analytics-stat-value" id="analytics-total-recorded">0</span>
+                <span class="analytics-stat-label">Recorded total</span>
+            </article>
+
+            <article class="analytics-stat">
+                <span class="analytics-stat-value" id="analytics-live-recorded">0</span>
+                <span class="analytics-stat-label">Live</span>
+            </article>
+
+            <article class="analytics-stat">
+                <span class="analytics-stat-value" id="analytics-catchup-recorded">0</span>
+                <span class="analytics-stat-label">Catch-up</span>
+            </article>
+        </section>
+
+        <section class="analytics-chart-card">
+            <div class="section-heading">
+                <h2 id="analytics-chart-title">Recorded totals by day</h2>
+                <p id="analytics-chart-description">Logged days only. A missing day is not treated as zero movement.</p>
+            </div>
+
+            <div
+                id="analytics-chart"
+                class="analytics-chart"
+                role="img"
+                aria-label="Recorded movement analytics chart"
+            ></div>
+
+            <div id="analytics-empty" class="analytics-empty" hidden>
+                No recorded data is available for the selected filters.
+            </div>
+        </section>
+
+        <section id="doctor-view-panel" class="doctor-view-panel" hidden>
+            <section class="doctor-summary-card">
+                <div class="section-heading section-heading-row">
+                    <div>
+                        <h2>Doctor view</h2>
+                        <p>Compact factual record for the selected period.</p>
+                    </div>
+                    <button id="print-doctor-view" class="small-secondary-button" type="button">
+                        Print
+                    </button>
+                </div>
+
+                <p class="doctor-view-disclaimer">
+                    This view summarizes recorded entries only. It does not classify a movement pattern as normal or abnormal and is not a diagnostic report.
+                </p>
+
+                <div id="doctor-range-summary" class="doctor-range-summary"></div>
+
+                <div class="doctor-table-wrap">
+                    <table class="doctor-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Total</th>
+                                <th scope="col">Live</th>
+                                <th scope="col">Catch-up</th>
+                                <th scope="col">Live recording span</th>
+                                <th scope="col">Note</th>
+                            </tr>
+                        </thead>
+                        <tbody id="doctor-table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+    </section>
+
     <section id="export-view" class="app-view" hidden>
         <section class="export-header">
             <div>
@@ -398,6 +540,11 @@
     <button id="nav-history" class="nav-button" type="button" data-view="history">
         <span class="nav-icon nav-history-icon" aria-hidden="true">≡</span>
         <span>History</span>
+    </button>
+
+    <button id="nav-analytics" class="nav-button" type="button" data-view="analytics">
+        <span class="nav-icon nav-analytics-icon" aria-hidden="true">▥</span>
+        <span>Analytics</span>
     </button>
 
     <button id="nav-export" class="nav-button" type="button" data-view="export">

@@ -689,7 +689,7 @@ button {
     z-index: 15;
     width: min(calc(100% - 28px), 492px);
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     padding: 6px;
     transform: translateX(-50%);
     border: 1px solid var(--border);
@@ -1269,5 +1269,436 @@ button {
     .tally-mark,
     .tally-group.complete::after {
         forced-color-adjust: auto;
+    }
+}
+
+
+.analytics-header {
+    margin-bottom: 16px;
+}
+
+.analytics-header h1 {
+    margin: 0;
+    font-size: 24px;
+    letter-spacing: -0.03em;
+}
+
+.analytics-header > div > p:last-child {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.analytics-controls-card,
+.analytics-chart-card,
+.doctor-summary-card {
+    margin-top: 16px;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow);
+}
+
+.analytics-controls-card {
+    margin-top: 0;
+}
+
+.analytics-view-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 5px;
+    border-radius: 15px;
+    background: var(--primary-soft);
+}
+
+.analytics-mode-button {
+    min-height: 42px;
+    border: 0;
+    border-radius: 11px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.analytics-mode-button.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 3px 10px rgba(31, 27, 24, 0.08);
+}
+
+.analytics-filter-block {
+    margin-top: 18px;
+}
+
+.analytics-filter-label {
+    display: block;
+    margin-bottom: 9px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.analytics-preset-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 7px;
+}
+
+.analytics-preset {
+    min-height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #faf9f7;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.analytics-preset.active {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.analytics-date-grid,
+.analytics-select-grid {
+    margin-top: 12px;
+}
+
+.settings-field select {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    outline: none;
+    background: #faf9f7;
+    color: var(--text);
+}
+
+.settings-field select:focus {
+    border-color: var(--primary);
+    background: #ffffff;
+}
+
+.analytics-filter-note {
+    min-height: 17px;
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.analytics-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.analytics-stat {
+    min-width: 0;
+    padding: 14px 8px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: var(--surface);
+    text-align: center;
+}
+
+.analytics-stat-value {
+    display: block;
+    font-size: 21px;
+    font-weight: 780;
+    letter-spacing: -0.04em;
+}
+
+.analytics-stat-label {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.25;
+}
+
+.analytics-chart {
+    min-height: 255px;
+    margin-top: 18px;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.analytics-empty {
+    padding: 34px 10px 14px;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+}
+
+.chart-shell {
+    min-width: 100%;
+}
+
+.chart-bars {
+    min-height: 220px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 8px 4px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.chart-bar-column {
+    min-width: 44px;
+    flex: 1 0 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.chart-bar-value {
+    min-height: 16px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.chart-bar-stack {
+    width: min(34px, 80%);
+    height: 165px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    border-radius: 8px 8px 3px 3px;
+    background: #f2eeea;
+}
+
+.chart-bar-segment {
+    width: 100%;
+    min-height: 0;
+    background: var(--primary);
+}
+
+.chart-bar-segment.secondary {
+    background: #a99d94;
+}
+
+.chart-bar-label {
+    width: 100%;
+    min-height: 30px;
+    color: var(--muted);
+    font-size: 9px;
+    line-height: 1.25;
+    text-align: center;
+}
+
+.chart-horizontal {
+    display: grid;
+    gap: 13px;
+    padding: 6px 0;
+}
+
+.chart-horizontal-row {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr) 32px;
+    gap: 9px;
+    align-items: center;
+}
+
+.chart-horizontal-label,
+.chart-horizontal-value {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.chart-horizontal-value {
+    text-align: right;
+    font-weight: 700;
+}
+
+.chart-horizontal-track {
+    height: 12px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--primary-soft);
+}
+
+.chart-horizontal-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--primary);
+}
+
+.analytics-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 13px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.analytics-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.analytics-legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: var(--primary);
+}
+
+.analytics-legend-swatch.secondary {
+    background: #a99d94;
+}
+
+.doctor-view-panel {
+    margin-top: 16px;
+}
+
+.doctor-view-panel[hidden] {
+    display: none;
+}
+
+.small-secondary-button {
+    min-height: 38px;
+    padding: 0 13px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #faf9f7;
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.doctor-view-disclaimer {
+    margin: 14px 0 0;
+    padding: 12px 13px;
+    border-radius: 14px;
+    background: var(--primary-soft);
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.doctor-range-summary {
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.doctor-table-wrap {
+    margin-top: 16px;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+}
+
+.doctor-table {
+    width: 100%;
+    min-width: 690px;
+    border-collapse: collapse;
+    background: #fff;
+    font-size: 11px;
+}
+
+.doctor-table th,
+.doctor-table td {
+    padding: 10px 11px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    text-align: left;
+}
+
+.doctor-table th {
+    background: #faf9f7;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 750;
+}
+
+.doctor-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.doctor-note-cell {
+    max-width: 220px;
+    white-space: normal;
+    line-height: 1.4;
+}
+
+.nav-analytics-icon {
+    font-size: 14px;
+}
+
+@media (max-width: 430px) {
+    .analytics-summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .analytics-preset-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bottom-nav .nav-button {
+        flex-direction: column;
+        gap: 2px;
+        font-size: 9px;
+        line-height: 1.05;
+    }
+}
+
+@media print {
+    body {
+        background: #ffffff;
+    }
+
+    .app-header,
+    .bottom-nav,
+    #today-view,
+    #history-view,
+    #export-view,
+    #settings-view,
+    .analytics-controls-card,
+    .analytics-summary-grid,
+    .analytics-chart-card,
+    .toast,
+    .update-banner,
+    .storage-warning,
+    .small-secondary-button {
+        display: none !important;
+    }
+
+    #analytics-view,
+    #doctor-view-panel {
+        display: block !important;
+    }
+
+    .doctor-summary-card {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .doctor-table-wrap {
+        overflow: visible;
+    }
+
+    .doctor-table {
+        min-width: 0;
     }
 }
