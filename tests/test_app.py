@@ -270,7 +270,7 @@ def test_update_banner_is_present():
 def test_service_worker_has_offline_and_update_handling():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v9";' in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v10";' in service_worker
     assert '"/offline"' in service_worker
     assert 'event.request.mode === "navigate"' in service_worker
     assert '"SKIP_WAITING"' in service_worker
@@ -477,7 +477,9 @@ def test_landing_page_has_privacy_and_product_sections():
     assert b'id="privacy"' in response.data
     assert b"No cloud requirement" in response.data
     assert b"No AI health analysis" in response.data
-    assert b'class="product-rhythm"' in response.data
+    assert b'class="product-visual"' in response.data
+    assert b'landing-mother-window.png' in response.data
+    assert b'landing-mother-phone.png' in response.data
 
 
 def test_landing_assets_exist_and_use_cobalt_identity():
@@ -512,3 +514,8 @@ def test_service_worker_caches_landing_and_app_assets():
     assert '"/app"' in service_worker
     assert '"/static/css/landing.css"' in service_worker
     assert '"/static/js/landing.js"' in service_worker
+
+
+def test_landing_images_exist_locally():
+    assert (ROOT / "static" / "images" / "landing-mother-window.png").exists()
+    assert (ROOT / "static" / "images" / "landing-mother-phone.png").exists()
