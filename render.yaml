@@ -1,7 +1,7 @@
 services:
   - type: web
     runtime: static
-    name: bumpmarks-pwa
+    name: bumpmarks
     buildCommand: python build_static.py && python verify_release.py --skip-build
     staticPublishPath: ./dist
     autoDeployTrigger: checksPass
