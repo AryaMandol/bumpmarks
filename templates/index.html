@@ -61,20 +61,21 @@
         </div>
 
         <div class="catchup-buttons">
-            <button class="catchup-button" data-count="1" type="button">+1</button>
-            <button class="catchup-button" data-count="2" type="button">+2</button>
-            <button class="catchup-button" data-count="3" type="button">+3</button>
-            <button class="catchup-button" data-count="5" type="button">+5</button>
+            <button class="catchup-button" data-catchup-count="1" type="button">+1</button>
+            <button class="catchup-button" data-catchup-count="2" type="button">+2</button>
+            <button class="catchup-button" data-catchup-count="3" type="button">+3</button>
+            <button class="catchup-button" data-catchup-count="5" type="button">+5</button>
             <button id="custom-catchup-button" class="catchup-button catchup-other" type="button">Other</button>
         </div>
     </section>
 
     <section class="recent-card">
-        <div class="section-heading">
+        <div class="section-heading section-heading-row">
             <div>
-                <h2>Recent</h2>
-                <p>Today's latest entries.</p>
+                <h2>Today's entries</h2>
+                <p>Live and catch-up movements recorded today.</p>
             </div>
+            <span id="entry-count-label" class="entry-count-label"></span>
         </div>
 
         <div id="empty-state" class="empty-state">
@@ -87,6 +88,87 @@
 </main>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<div id="catchup-modal" class="modal-backdrop" hidden>
+    <section class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="catchup-title">
+        <div class="modal-handle" aria-hidden="true"></div>
+
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">CATCH-UP ENTRY</p>
+                <h2 id="catchup-title">Add missed movements</h2>
+            </div>
+            <button id="catchup-close" class="icon-button" type="button" aria-label="Close">×</button>
+        </div>
+
+        <div class="field-group">
+            <label for="catchup-count">How many movements?</label>
+
+            <div class="stepper">
+                <button id="catchup-minus" type="button" aria-label="Decrease count">−</button>
+                <input id="catchup-count" type="number" min="1" max="100" inputmode="numeric" value="1">
+                <button id="catchup-plus" type="button" aria-label="Increase count">+</button>
+            </div>
+        </div>
+
+        <fieldset class="field-group">
+            <legend>When approximately?</legend>
+
+            <div class="time-options">
+                <label class="time-option">
+                    <input type="radio" name="catchup-time" value="just_now" checked>
+                    <span>Just now</span>
+                </label>
+
+                <label class="time-option">
+                    <input type="radio" name="catchup-time" value="within_30">
+                    <span>Within 30 min</span>
+                </label>
+
+                <label class="time-option">
+                    <input type="radio" name="catchup-time" value="within_60">
+                    <span>Within 1 hr</span>
+                </label>
+
+                <label class="time-option">
+                    <input type="radio" name="catchup-time" value="earlier_today">
+                    <span>Earlier today</span>
+                </label>
+
+                <label class="time-option">
+                    <input type="radio" name="catchup-time" value="unknown">
+                    <span>Don't remember</span>
+                </label>
+            </div>
+        </fieldset>
+
+        <button id="catchup-save" class="primary-action" type="button">
+            Add catch-up
+        </button>
+    </section>
+</div>
+
+<div id="delete-modal" class="modal-backdrop" hidden>
+    <section class="modal-sheet compact-sheet" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+        <div class="modal-handle" aria-hidden="true"></div>
+
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">REMOVE ENTRY</p>
+                <h2 id="delete-title">Delete this entry?</h2>
+            </div>
+        </div>
+
+        <p class="modal-copy">
+            The daily total will update immediately. This cannot be undone after closing the message.
+        </p>
+
+        <div class="modal-actions">
+            <button id="delete-cancel" class="secondary-action" type="button">Cancel</button>
+            <button id="delete-confirm" class="danger-action" type="button">Delete</button>
+        </div>
+    </section>
+</div>
 
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
