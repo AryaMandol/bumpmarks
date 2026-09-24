@@ -8,6 +8,11 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/offline")
+def offline():
+    return render_template("offline.html")
+
+
 @app.route("/sw.js")
 def service_worker():
     return send_from_directory(

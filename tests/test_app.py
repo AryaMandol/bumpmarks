@@ -225,3 +225,61 @@ def test_delete_all_data_logic_exists():
     assert "deleteAllLocalData" in javascript
     assert "localStorage.removeItem(STORAGE_KEY)" in javascript
     assert "createEmptyState()" in javascript
+
+
+def test_offline_route_loads():
+    client = app.test_client()
+
+    response = client.get("/offline")
+
+    assert response.status_code == 200
+    assert b"BumpMarks is offline" in response.data
+
+
+def test_manifest_has_hardened_pwa_metadata():
+    manifest = (ROOT / "static" / "manifest.webmanifest").read_text(encoding="utf-8")
+
+    assert '"id": "/"' in manifest
+    assert '"scope": "/"' in manifest
+    assert '"display": "standalone"' in manifest
+    assert '"orientation": "portrait"' in manifest
+    assert '"purpose": "maskable"' in manifest
+
+
+def test_install_ui_is_present():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'id="install-app"' in response.data
+    assert b'id="install-ready"' in response.data
+    assert b'id="install-ios-help"' in response.data
+    assert b'id="install-installed"' in response.data
+
+
+def test_update_banner_is_present():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'id="update-banner"' in response.data
+    assert b'id="apply-update"' in response.data
+
+
+def test_service_worker_has_offline_and_update_handling():
+    service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
+
+    assert 'const CACHE_NAME = "bumpmarks-v6";' in service_worker
+    assert '"/offline"' in service_worker
+    assert 'event.request.mode === "navigate"' in service_worker
+    assert '"SKIP_WAITING"' in service_worker
+
+
+def test_frontend_has_install_and_update_logic():
+    javascript = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
+
+    assert "beforeinstallprompt" in javascript
+    assert "appinstalled" in javascript
+    assert "registerServiceWorker" in javascript
+    assert "applyPendingUpdate" in javascript
+    assert "controllerchange" in javascript

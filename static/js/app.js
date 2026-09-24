@@ -28,6 +28,16 @@ const entryCountLabelElement = document.getElementById("entry-count-label");
 const customCatchupButton = document.getElementById("custom-catchup-button");
 const toastElement = document.getElementById("toast");
 
+const updateBanner = document.getElementById("update-banner");
+const applyUpdateButton = document.getElementById("apply-update");
+
+const installReady = document.getElementById("install-ready");
+const installInstalled = document.getElementById("install-installed");
+const installIosHelp = document.getElementById("install-ios-help");
+const installBrowserHelp = document.getElementById("install-browser-help");
+const installAppButton = document.getElementById("install-app");
+
+
 const targetProgress = document.getElementById("target-progress");
 const targetProgressText = document.getElementById("target-progress-text");
 const targetProgressBar = document.getElementById("target-progress-bar");
@@ -102,6 +112,149 @@ let selectedHistoryDateKey = null;
 let todayNoteTimer = null;
 let detailNoteTimer = null;
 let pendingRestoreState = null;
+let deferredInstallPrompt = null;
+let waitingServiceWorker = null;
+
+
+
+function isStandaloneMode() {
+    return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true
+    );
+}
+
+
+function isIosDevice() {
+    return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+}
+
+
+function renderInstallState() {
+    const installed = isStandaloneMode();
+
+    installInstalled.hidden = !installed;
+
+    if (installed) {
+        installReady.hidden = true;
+        installIosHelp.hidden = true;
+        installBrowserHelp.hidden = true;
+        return;
+    }
+
+    installReady.hidden = deferredInstallPrompt === null;
+    installIosHelp.hidden = !(isIosDevice() && deferredInstallPrompt === null);
+    installBrowserHelp.hidden = isIosDevice() || deferredInstallPrompt !== null;
+}
+
+
+async function installApp() {
+    if (!deferredInstallPrompt) {
+        renderInstallState();
+        return;
+    }
+
+    deferredInstallPrompt.prompt();
+
+    try {
+        await deferredInstallPrompt.userChoice;
+    } finally {
+        deferredInstallPrompt = null;
+        renderInstallState();
+    }
+}
+
+
+function showUpdateAvailable(worker) {
+    waitingServiceWorker = worker;
+    updateBanner.hidden = false;
+}
+
+
+function hideUpdateAvailable() {
+    waitingServiceWorker = null;
+    updateBanner.hidden = true;
+}
+
+
+function applyPendingUpdate() {
+    if (!waitingServiceWorker) {
+        return;
+    }
+
+    waitingServiceWorker.postMessage({
+        type: "SKIP_WAITING"
+    });
+}
+
+
+function registerPwaHandlers() {
+    window.addEventListener("beforeinstallprompt", event => {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        renderInstallState();
+    });
+
+    window.addEventListener("appinstalled", () => {
+        deferredInstallPrompt = null;
+        renderInstallState();
+        showToast("BumpMarks installed");
+    });
+
+    window
+        .matchMedia("(display-mode: standalone)")
+        .addEventListener?.("change", renderInstallState);
+
+    renderInstallState();
+}
+
+
+function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) {
+        return;
+    }
+
+    let refreshing = false;
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (refreshing) {
+            return;
+        }
+
+        refreshing = true;
+        window.location.reload();
+    });
+
+    navigator.serviceWorker
+        .register("/sw.js")
+        .then(registration => {
+            if (registration.waiting) {
+                showUpdateAvailable(registration.waiting);
+            }
+
+            registration.addEventListener("updatefound", () => {
+                const worker = registration.installing;
+
+                if (!worker) {
+                    return;
+                }
+
+                worker.addEventListener("statechange", () => {
+                    if (
+                        worker.state === "installed" &&
+                        navigator.serviceWorker.controller
+                    ) {
+                        showUpdateAvailable(worker);
+                    }
+                });
+            });
+
+            registration.update().catch(() => {});
+        })
+        .catch(error => {
+            console.error("Service worker registration failed.", error);
+        });
+}
 
 
 function getLocalDateKey(date = new Date()) {
@@ -1771,18 +1924,16 @@ document.addEventListener("keydown", event => {
 });
 
 
+installAppButton.addEventListener("click", installApp);
+applyUpdateButton.addEventListener("click", applyPendingUpdate);
+
 undoButton.addEventListener("click", undoLastEntry);
 
 
-if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-        navigator.serviceWorker
-            .register("/sw.js")
-            .catch(error => {
-                console.error("Service worker registration failed.", error);
-            });
-    });
-}
+window.addEventListener("load", () => {
+    registerPwaHandlers();
+    registerServiceWorker();
+});
 
 
 let state = loadState();

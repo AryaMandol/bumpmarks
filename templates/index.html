@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#faf8f5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="BumpMarks">
     <meta name="description" content="BumpMarks - private, simple baby movement tracking.">
 
     <title>BumpMarks</title>
 
     <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
     <link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
@@ -23,6 +27,15 @@
             <p class="tagline">Private baby movement log</p>
         </div>
     </header>
+
+
+    <section id="update-banner" class="update-banner" hidden>
+        <div>
+            <strong>Update available</strong>
+            <p>A newer version of BumpMarks is ready.</p>
+        </div>
+        <button id="apply-update" type="button">Refresh</button>
+    </section>
 
     <section id="today-view" class="app-view">
         <section class="today-card">
@@ -310,6 +323,42 @@
         <button id="save-settings" class="movement-button settings-save-button" type="button">
             Save settings
         </button>
+
+
+        <section class="settings-card">
+            <div class="section-heading">
+                <h2>Install BumpMarks</h2>
+                <p>Use it from your home screen like an app.</p>
+            </div>
+
+            <div id="install-ready" hidden>
+                <button id="install-app" class="secondary-wide-button" type="button">
+                    Install BumpMarks
+                </button>
+            </div>
+
+            <div id="install-installed" class="install-message" hidden>
+                BumpMarks is already running as an installed app.
+            </div>
+
+            <div id="install-ios-help" class="install-message" hidden>
+                On iPhone/iPad: open this page in Safari, tap Share, then choose <strong>Add to Home Screen</strong>.
+            </div>
+
+            <div id="install-browser-help" class="install-message" hidden>
+                Your browser may provide an Install or Add to Home Screen option in its menu.
+            </div>
+        </section>
+
+        <section class="settings-card">
+            <div class="section-heading">
+                <h2>Reminders</h2>
+                <p>BumpMarks V1 does not schedule background reminders.</p>
+            </div>
+            <p class="settings-help settings-help-block">
+                Reliable scheduled notifications are inconsistent across browsers and installed PWAs without additional platform or server support. We are keeping V1 honest rather than pretending a timer will always fire.
+            </p>
+        </section>
 
         <section class="privacy-note">
             <strong>Privacy</strong>

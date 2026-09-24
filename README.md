@@ -121,3 +121,24 @@ It does not assess fetal wellbeing, diagnose medical conditions, determine wheth
 - Delete-all-data confirmation
 - Delete all movement history, notes, and settings from browser local storage
 - No export, backup, or restore file is uploaded to the Flask server
+
+
+### BM-006 - Complete in this version
+
+- Hardened PWA manifest with app id, scope, portrait orientation, categories, and maskable icon
+- Apple touch icon and iOS PWA metadata
+- Install button for browsers that expose the PWA install prompt
+- iPhone/iPad Add to Home Screen guidance
+- Installed-app detection
+- Service-worker update detection with user-controlled refresh
+- Offline navigation fallback
+- Cache cleanup between app versions
+- Mobile safe-area and very-small-screen layout hardening
+- Honest V1 reminder policy: no unreliable browser-only scheduled reminders
+- Background reminder delivery deferred until a reliable cross-platform approach is chosen
+
+## Reminder Decision
+
+BumpMarks V1 does not schedule background reminders.
+
+Browser-only timers and notifications are not reliable enough across Android, iOS, browser, and installed-PWA states for a movement-tracking utility. The app will not claim to provide a reminder unless it can do so predictably.

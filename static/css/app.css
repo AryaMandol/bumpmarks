@@ -1087,3 +1087,100 @@ button {
         font-size: 11px;
     }
 }
+
+
+.update-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin: -6px 0 16px;
+    padding: 13px 14px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--primary-soft);
+    color: var(--text);
+}
+
+.update-banner[hidden] {
+    display: none;
+}
+
+.update-banner strong {
+    font-size: 13px;
+}
+
+.update-banner p {
+    margin: 3px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.update-banner button {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.install-message {
+    margin-top: 14px;
+    padding: 12px 13px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #faf9f7;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.install-message strong {
+    color: var(--text);
+}
+
+.settings-help-block {
+    margin-top: 14px;
+    line-height: 1.55;
+}
+
+@supports (padding: max(0px)) {
+    .bottom-nav {
+        padding-bottom: max(6px, env(safe-area-inset-bottom));
+    }
+}
+
+@media (display-mode: standalone) {
+    body {
+        overscroll-behavior-y: contain;
+    }
+}
+
+@media (max-width: 340px) {
+    .app-shell {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .today-card,
+    .catchup-card,
+    .note-card,
+    .recent-card,
+    .doctor-card,
+    .settings-card {
+        border-radius: 20px;
+    }
+
+    .movement-count {
+        font-size: 70px;
+    }
+
+    .nav-button {
+        font-size: 10px;
+    }
+}
