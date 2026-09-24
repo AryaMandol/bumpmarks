@@ -142,6 +142,89 @@
         <div id="history-list" class="history-list"></div>
     </section>
 
+
+    <section id="export-view" class="app-view" hidden>
+        <section class="export-header">
+            <div>
+                <p class="eyebrow">EXPORT & DATA</p>
+                <h1>Your data stays yours</h1>
+                <p>Export, back up, restore, or erase the local data stored by BumpMarks.</p>
+            </div>
+        </section>
+
+        <section class="settings-card">
+            <div class="section-heading">
+                <h2>Export movement log</h2>
+                <p>Create a CSV file that can be opened in Excel, Google Sheets, or shared with your doctor.</p>
+            </div>
+
+            <div class="settings-grid">
+                <label class="settings-field">
+                    <span>From date</span>
+                    <input id="export-start-date" type="date">
+                </label>
+
+                <label class="settings-field">
+                    <span>To date</span>
+                    <input id="export-end-date" type="date">
+                </label>
+            </div>
+
+            <div id="export-error" class="settings-error" role="alert" hidden></div>
+
+            <button id="export-csv" class="secondary-wide-button" type="button">
+                Export CSV
+            </button>
+        </section>
+
+        <section class="settings-card">
+            <div class="section-heading">
+                <h2>Backup</h2>
+                <p>Download a complete BumpMarks backup, including movement history, notes, and settings.</p>
+            </div>
+
+            <button id="download-backup" class="secondary-wide-button" type="button">
+                Download JSON backup
+            </button>
+        </section>
+
+        <section class="settings-card">
+            <div class="section-heading">
+                <h2>Restore backup</h2>
+                <p>Restore a BumpMarks JSON backup. The restored backup will replace the data currently stored on this device.</p>
+            </div>
+
+            <input
+                id="restore-file"
+                class="visually-hidden-file"
+                type="file"
+                accept="application/json,.json"
+            >
+
+            <button id="choose-restore-file" class="secondary-wide-button" type="button">
+                Choose backup file
+            </button>
+
+            <p id="restore-file-name" class="selected-file-name"></p>
+        </section>
+
+        <section class="settings-card danger-zone">
+            <div class="section-heading">
+                <h2>Delete all local data</h2>
+                <p>Erase all movements, notes, and settings stored by BumpMarks in this browser.</p>
+            </div>
+
+            <button id="delete-all-data" class="danger-wide-button" type="button">
+                Delete all data
+            </button>
+        </section>
+
+        <section class="privacy-note">
+            <strong>No upload involved</strong>
+            <p>CSV export, backup, restore, and deletion happen locally in your browser. BumpMarks does not send these files to the Flask server.</p>
+        </section>
+    </section>
+
     <section id="settings-view" class="app-view" hidden>
         <section class="settings-header">
             <div>
@@ -245,6 +328,11 @@
     <button id="nav-history" class="nav-button" type="button" data-view="history">
         <span class="nav-icon nav-history-icon" aria-hidden="true">≡</span>
         <span>History</span>
+    </button>
+
+    <button id="nav-export" class="nav-button" type="button" data-view="export">
+        <span class="nav-icon nav-export-icon" aria-hidden="true">⇩</span>
+        <span>Export</span>
     </button>
 
     <button id="nav-settings" class="nav-button" type="button" data-view="settings">
@@ -373,6 +461,51 @@
                 rows="4"
                 placeholder="Add a note for this day."
             ></textarea>
+        </div>
+    </section>
+</div>
+
+
+<div id="restore-confirm-modal" class="modal-backdrop" hidden>
+    <section class="modal-sheet compact-sheet" role="dialog" aria-modal="true" aria-labelledby="restore-confirm-title">
+        <div class="modal-handle" aria-hidden="true"></div>
+
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">RESTORE BACKUP</p>
+                <h2 id="restore-confirm-title">Replace current data?</h2>
+            </div>
+        </div>
+
+        <p class="modal-copy">
+            Restoring this backup will replace all BumpMarks data currently stored on this device.
+        </p>
+
+        <div class="modal-actions">
+            <button id="restore-cancel" class="secondary-action" type="button">Cancel</button>
+            <button id="restore-confirm" class="danger-action" type="button">Restore backup</button>
+        </div>
+    </section>
+</div>
+
+<div id="delete-all-modal" class="modal-backdrop" hidden>
+    <section class="modal-sheet compact-sheet" role="dialog" aria-modal="true" aria-labelledby="delete-all-title">
+        <div class="modal-handle" aria-hidden="true"></div>
+
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">DELETE LOCAL DATA</p>
+                <h2 id="delete-all-title">Delete everything?</h2>
+            </div>
+        </div>
+
+        <p class="modal-copy">
+            All movement history, notes, and settings stored by BumpMarks in this browser will be permanently erased.
+        </p>
+
+        <div class="modal-actions">
+            <button id="delete-all-cancel" class="secondary-action" type="button">Cancel</button>
+            <button id="delete-all-confirm" class="danger-action" type="button">Delete everything</button>
         </div>
     </section>
 </div>

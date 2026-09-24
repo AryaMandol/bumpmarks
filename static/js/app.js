@@ -41,7 +41,27 @@ const historyView = document.getElementById("history-view");
 const settingsView = document.getElementById("settings-view");
 const navTodayButton = document.getElementById("nav-today");
 const navHistoryButton = document.getElementById("nav-history");
+const navExportButton = document.getElementById("nav-export");
 const navSettingsButton = document.getElementById("nav-settings");
+
+const exportView = document.getElementById("export-view");
+const exportStartDate = document.getElementById("export-start-date");
+const exportEndDate = document.getElementById("export-end-date");
+const exportCsvButton = document.getElementById("export-csv");
+const exportError = document.getElementById("export-error");
+const downloadBackupButton = document.getElementById("download-backup");
+const restoreFileInput = document.getElementById("restore-file");
+const chooseRestoreFileButton = document.getElementById("choose-restore-file");
+const restoreFileName = document.getElementById("restore-file-name");
+const deleteAllDataButton = document.getElementById("delete-all-data");
+
+const restoreConfirmModal = document.getElementById("restore-confirm-modal");
+const restoreCancelButton = document.getElementById("restore-cancel");
+const restoreConfirmButton = document.getElementById("restore-confirm");
+
+const deleteAllModal = document.getElementById("delete-all-modal");
+const deleteAllCancelButton = document.getElementById("delete-all-cancel");
+const deleteAllConfirmButton = document.getElementById("delete-all-confirm");
 
 const todayNoteInput = document.getElementById("today-note");
 const todayNoteStatus = document.getElementById("today-note-status");
@@ -81,6 +101,7 @@ let pendingDeleteEntryId = null;
 let selectedHistoryDateKey = null;
 let todayNoteTimer = null;
 let detailNoteTimer = null;
+let pendingRestoreState = null;
 
 
 function getLocalDateKey(date = new Date()) {
@@ -371,7 +392,9 @@ function syncBodyModalState() {
     const anyOpen =
         !catchupModal.hidden ||
         !deleteModal.hidden ||
-        !dayDetailModal.hidden;
+        !dayDetailModal.hidden ||
+        !restoreConfirmModal.hidden ||
+        !deleteAllModal.hidden;
 
     document.body.classList.toggle("modal-open", anyOpen);
 }
@@ -379,19 +402,26 @@ function syncBodyModalState() {
 
 function setActiveView(viewName) {
     const showHistory = viewName === "history";
+    const showExport = viewName === "export";
     const showSettings = viewName === "settings";
-    const showToday = !showHistory && !showSettings;
+    const showToday = !showHistory && !showExport && !showSettings;
 
     todayView.hidden = !showToday;
     historyView.hidden = !showHistory;
+    exportView.hidden = !showExport;
     settingsView.hidden = !showSettings;
 
     navTodayButton.classList.toggle("active", showToday);
     navHistoryButton.classList.toggle("active", showHistory);
+    navExportButton.classList.toggle("active", showExport);
     navSettingsButton.classList.toggle("active", showSettings);
 
     if (showHistory) {
         renderHistory();
+    }
+
+    if (showExport) {
+        renderExportForm();
     }
 
     if (showSettings) {
@@ -753,6 +783,379 @@ function saveSettings() {
     render();
     renderSettingsForm();
     showToast("Settings saved");
+}
+
+
+
+function getAllDataDateKeys() {
+    return Object.keys(state.days).sort();
+}
+
+
+function renderExportForm() {
+    const keys = getAllDataDateKeys();
+    const today = getLocalDateKey();
+
+    exportStartDate.value = keys.length ? keys[0] : today;
+    exportEndDate.value = today;
+    exportError.hidden = true;
+    exportError.textContent = "";
+    restoreFileName.textContent = "";
+    restoreFileInput.value = "";
+}
+
+
+function sanitizeCsvFormula(value) {
+    const text = String(value ?? "");
+
+    if (/^[=+\-@]/.test(text)) {
+        return `'${text}`;
+    }
+
+    return text;
+}
+
+
+function csvCell(value) {
+    const safe = sanitizeCsvFormula(value);
+    return `"${safe.replace(/"/g, '""')}"`;
+}
+
+
+function downloadTextFile(filename, content, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = url;
+    anchor.download = filename;
+
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+
+    window.setTimeout(() => {
+        URL.revokeObjectURL(url);
+    }, 1000);
+}
+
+
+function validateExportRange() {
+    const start = exportStartDate.value;
+    const end = exportEndDate.value;
+
+    if (!start || !end) {
+        return {
+            ok: false,
+            message: "Choose both a start date and end date."
+        };
+    }
+
+    if (start > end) {
+        return {
+            ok: false,
+            message: "From date cannot be after To date."
+        };
+    }
+
+    return {
+        ok: true,
+        start,
+        end
+    };
+}
+
+
+function exportCsv() {
+    const validation = validateExportRange();
+
+    if (!validation.ok) {
+        exportError.textContent = validation.message;
+        exportError.hidden = false;
+        return;
+    }
+
+    const rows = [
+        [
+            "Date",
+            "Entry Type",
+            "Count",
+            "Recorded At",
+            "Approximate Time",
+            "Daily Note"
+        ]
+    ];
+
+    const dateKeys = getAllDataDateKeys().filter(
+        dateKey => dateKey >= validation.start && dateKey <= validation.end
+    );
+
+    dateKeys.forEach(dateKey => {
+        const day = getDayData(dateKey);
+
+        if (!day) {
+            return;
+        }
+
+        if (day.entries.length === 0 && day.note.trim()) {
+            rows.push([
+                dateKey,
+                "",
+                "",
+                "",
+                "",
+                day.note
+            ]);
+            return;
+        }
+
+        day.entries.forEach(entry => {
+            rows.push([
+                dateKey,
+                entry.type === "catchup" ? "Catch-up" : "Live",
+                Number(entry.count || 0),
+                entry.recordedAt || "",
+                entry.type === "catchup"
+                    ? (APPROXIMATE_TIME_LABELS[entry.approximateTime || "unknown"] || "Don't remember")
+                    : "",
+                day.note || ""
+            ]);
+        });
+    });
+
+    if (rows.length === 1) {
+        exportError.textContent = "No BumpMarks data exists in the selected date range.";
+        exportError.hidden = false;
+        return;
+    }
+
+    exportError.hidden = true;
+    exportError.textContent = "";
+
+    const csv = rows
+        .map(row => row.map(csvCell).join(","))
+        .join("\r\n");
+
+    downloadTextFile(
+        `bumpmarks-${validation.start}-to-${validation.end}.csv`,
+        "\ufeff" + csv,
+        "text/csv;charset=utf-8"
+    );
+
+    showToast("CSV exported");
+}
+
+
+function createBackupPayload() {
+    return {
+        app: "BumpMarks",
+        formatVersion: 1,
+        exportedAt: new Date().toISOString(),
+        data: state
+    };
+}
+
+
+function downloadBackup() {
+    const payload = createBackupPayload();
+
+    downloadTextFile(
+        `bumpmarks-backup-${getLocalDateKey()}.json`,
+        JSON.stringify(payload, null, 2),
+        "application/json;charset=utf-8"
+    );
+
+    showToast("Backup downloaded");
+}
+
+
+function validateBackupPayload(payload) {
+    if (!payload || typeof payload !== "object") {
+        return null;
+    }
+
+    if (payload.app !== "BumpMarks" || payload.formatVersion !== 1) {
+        return null;
+    }
+
+    if (!payload.data || typeof payload.data !== "object") {
+        return null;
+    }
+
+    if (!payload.data.days || typeof payload.data.days !== "object" || Array.isArray(payload.data.days)) {
+        return null;
+    }
+
+    const restored = {
+        version: 1,
+        settings: normalizeSettings(payload.data.settings),
+        days: {}
+    };
+
+    for (const [dateKey, rawDay] of Object.entries(payload.data.days)) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+            return null;
+        }
+
+        const day = normalizeDayData(rawDay);
+
+        const entries = [];
+
+        for (const rawEntry of day.entries) {
+            if (!rawEntry || typeof rawEntry !== "object") {
+                return null;
+            }
+
+            const count = Number(rawEntry.count);
+
+            if (!Number.isInteger(count) || count < 1 || count > 100) {
+                return null;
+            }
+
+            const type = rawEntry.type === "catchup" ? "catchup" : "live";
+
+            if (typeof rawEntry.recordedAt !== "string" || Number.isNaN(new Date(rawEntry.recordedAt).getTime())) {
+                return null;
+            }
+
+            const entry = {
+                id: typeof rawEntry.id === "string" && rawEntry.id
+                    ? rawEntry.id
+                    : createEntryId(),
+                type,
+                count,
+                recordedAt: rawEntry.recordedAt
+            };
+
+            if (type === "catchup") {
+                entry.approximateTime = APPROXIMATE_TIME_LABELS[rawEntry.approximateTime]
+                    ? rawEntry.approximateTime
+                    : "unknown";
+            }
+
+            if (typeof rawEntry.editedAt === "string" && !Number.isNaN(new Date(rawEntry.editedAt).getTime())) {
+                entry.editedAt = rawEntry.editedAt;
+            }
+
+            entries.push(entry);
+        }
+
+        restored.days[dateKey] = {
+            entries,
+            note: String(day.note || "").slice(0, 500)
+        };
+    }
+
+    return restored;
+}
+
+
+function closeRestoreConfirm() {
+    restoreConfirmModal.hidden = true;
+    pendingRestoreState = null;
+    syncBodyModalState();
+}
+
+
+function openRestoreConfirm(restoredState) {
+    pendingRestoreState = restoredState;
+    restoreConfirmModal.hidden = false;
+    syncBodyModalState();
+}
+
+
+function applyRestore() {
+    if (!pendingRestoreState) {
+        closeRestoreConfirm();
+        return;
+    }
+
+    state = pendingRestoreState;
+    saveState();
+
+    restoreConfirmModal.hidden = true;
+    pendingRestoreState = null;
+    syncBodyModalState();
+
+    renderDate();
+    render();
+    renderSettingsForm();
+    renderExportForm();
+    setActiveView("today");
+
+    showToast("Backup restored");
+}
+
+
+function handleRestoreFile(event) {
+    const file = event.target.files && event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    restoreFileName.textContent = file.name;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+        try {
+            const payload = JSON.parse(String(reader.result || ""));
+            const restoredState = validateBackupPayload(payload);
+
+            if (!restoredState) {
+                showToast("Invalid BumpMarks backup");
+                restoreFileInput.value = "";
+                restoreFileName.textContent = "";
+                return;
+            }
+
+            openRestoreConfirm(restoredState);
+        } catch (error) {
+            console.error("Could not parse BumpMarks backup.", error);
+            showToast("Invalid BumpMarks backup");
+            restoreFileInput.value = "";
+            restoreFileName.textContent = "";
+        }
+    };
+
+    reader.onerror = () => {
+        showToast("Could not read backup file");
+        restoreFileInput.value = "";
+        restoreFileName.textContent = "";
+    };
+
+    reader.readAsText(file);
+}
+
+
+function openDeleteAllConfirm() {
+    deleteAllModal.hidden = false;
+    syncBodyModalState();
+}
+
+
+function closeDeleteAllConfirm() {
+    deleteAllModal.hidden = true;
+    syncBodyModalState();
+}
+
+
+function deleteAllLocalData() {
+    localStorage.removeItem(STORAGE_KEY);
+
+    state = createEmptyState();
+
+    deleteAllModal.hidden = true;
+    syncBodyModalState();
+
+    renderDate();
+    render();
+    renderSettingsForm();
+    renderExportForm();
+    setActiveView("today");
+
+    showToast("All local data deleted");
 }
 
 
@@ -1300,7 +1703,37 @@ dayDetailModal.addEventListener("click", event => {
 
 navTodayButton.addEventListener("click", () => setActiveView("today"));
 navHistoryButton.addEventListener("click", () => setActiveView("history"));
+navExportButton.addEventListener("click", () => setActiveView("export"));
 navSettingsButton.addEventListener("click", () => setActiveView("settings"));
+
+
+exportCsvButton.addEventListener("click", exportCsv);
+downloadBackupButton.addEventListener("click", downloadBackup);
+
+chooseRestoreFileButton.addEventListener("click", () => {
+    restoreFileInput.click();
+});
+
+restoreFileInput.addEventListener("change", handleRestoreFile);
+
+restoreCancelButton.addEventListener("click", closeRestoreConfirm);
+restoreConfirmButton.addEventListener("click", applyRestore);
+
+restoreConfirmModal.addEventListener("click", event => {
+    if (event.target === restoreConfirmModal) {
+        closeRestoreConfirm();
+    }
+});
+
+deleteAllDataButton.addEventListener("click", openDeleteAllConfirm);
+deleteAllCancelButton.addEventListener("click", closeDeleteAllConfirm);
+deleteAllConfirmButton.addEventListener("click", deleteAllLocalData);
+
+deleteAllModal.addEventListener("click", event => {
+    if (event.target === deleteAllModal) {
+        closeDeleteAllConfirm();
+    }
+});
 
 todayNoteInput.addEventListener("input", scheduleTodayNoteSave);
 detailNoteInput.addEventListener("input", scheduleDetailNoteSave);
@@ -1309,6 +1742,16 @@ saveSettingsButton.addEventListener("click", saveSettings);
 
 document.addEventListener("keydown", event => {
     if (event.key !== "Escape") {
+        return;
+    }
+
+    if (!restoreConfirmModal.hidden) {
+        closeRestoreConfirm();
+        return;
+    }
+
+    if (!deleteAllModal.hidden) {
+        closeDeleteAllConfirm();
         return;
     }
 
@@ -1347,4 +1790,5 @@ let state = loadState();
 renderDate();
 render();
 renderSettingsForm();
+renderExportForm();
 setActiveView("today");

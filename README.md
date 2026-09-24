@@ -107,3 +107,17 @@ The current application does not send movement records, notes, or settings to th
 BumpMarks is a recording tool only.
 
 It does not assess fetal wellbeing, diagnose medical conditions, determine whether a movement pattern is normal or abnormal, or replace guidance from a qualified healthcare professional.
+
+
+### BM-005 - Complete in this version
+
+- Export tab
+- CSV export for a selected date range
+- CSV includes entry type, count, recorded timestamp, approximate catch-up timing, and daily note
+- CSV formula-injection protection for user-entered text
+- Full JSON backup of movement history, notes, and settings
+- Strict local validation before restore
+- Restore confirmation before replacing current local data
+- Delete-all-data confirmation
+- Delete all movement history, notes, and settings from browser local storage
+- No export, backup, or restore file is uploaded to the Flask server

@@ -163,3 +163,65 @@ def test_settings_save_and_validation_logic_exists():
     assert "renderSettingsForm" in javascript
     assert "doctorInstructions" in javascript
     assert "dailyTarget" in javascript
+
+
+def test_export_view_and_navigation_are_present():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'id="export-view"' in response.data
+    assert b'id="nav-export"' in response.data
+    assert b'id="export-start-date"' in response.data
+    assert b'id="export-end-date"' in response.data
+    assert b'id="export-csv"' in response.data
+
+
+def test_backup_restore_and_delete_controls_are_present():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'id="download-backup"' in response.data
+    assert b'id="restore-file"' in response.data
+    assert b'id="choose-restore-file"' in response.data
+    assert b'id="delete-all-data"' in response.data
+
+
+def test_restore_and_delete_confirmation_modals_are_present():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'id="restore-confirm-modal"' in response.data
+    assert b'id="restore-confirm"' in response.data
+    assert b'id="delete-all-modal"' in response.data
+    assert b'id="delete-all-confirm"' in response.data
+
+
+def test_export_and_backup_logic_exists():
+    javascript = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
+
+    assert "exportCsv" in javascript
+    assert "createBackupPayload" in javascript
+    assert "downloadBackup" in javascript
+    assert "downloadTextFile" in javascript
+    assert "sanitizeCsvFormula" in javascript
+
+
+def test_restore_validation_and_apply_logic_exists():
+    javascript = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
+
+    assert "validateBackupPayload" in javascript
+    assert "handleRestoreFile" in javascript
+    assert "applyRestore" in javascript
+    assert 'payload.app !== "BumpMarks"' in javascript
+    assert "formatVersion !== 1" in javascript
+
+
+def test_delete_all_data_logic_exists():
+    javascript = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
+
+    assert "deleteAllLocalData" in javascript
+    assert "localStorage.removeItem(STORAGE_KEY)" in javascript
+    assert "createEmptyState()" in javascript
