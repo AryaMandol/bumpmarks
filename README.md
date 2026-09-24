@@ -72,25 +72,35 @@ http://127.0.0.1:5000
 - Delete entries with confirmation
 - Existing BM-001 data compatibility
 
-### BM-003 - Complete in this version
+### BM-003 - Complete
 
 - Today / History navigation
 - History ordered by date
 - Daily totals
 - Live vs catch-up breakdown
-- First-to-last recorded time summary
 - Day-detail sheet
 - Full day entry timeline
 - Optional daily notes
-- Notes editable for today and historical days
-- Auto-save notes locally
-- Existing BM-001/BM-002 local data remains compatible
+- Local auto-save notes
+
+### BM-004 - Complete in this version
+
+- Settings tab
+- Configurable tracking start and end time
+- Supports tracking windows that cross midnight
+- Optional daily movement target
+- Target progress on Today screen
+- Haptic feedback on/off
+- Local doctor-instructions note
+- Doctor instructions displayed on Today when configured
+- Validation for settings
+- Existing BM-001/BM-002/BM-003 local data remains compatible
 
 ## Privacy
 
-Movement information and notes are stored using browser local storage.
+Movement information, notes, and settings are stored using browser local storage.
 
-The current application does not send movement records or notes to the Flask server.
+The current application does not send movement records, notes, or settings to the Flask server.
 
 ## Medical Disclaimer
 

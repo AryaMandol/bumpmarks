@@ -1,5 +1,13 @@
 const STORAGE_KEY = "bumpmarks.v1";
 
+const DEFAULT_SETTINGS = {
+    trackingStart: "12:00",
+    trackingEnd: "00:00",
+    dailyTarget: null,
+    hapticsEnabled: true,
+    doctorInstructions: ""
+};
+
 const APPROXIMATE_TIME_LABELS = {
     just_now: "Just now",
     within_30: "Within 30 min",
@@ -20,16 +28,34 @@ const entryCountLabelElement = document.getElementById("entry-count-label");
 const customCatchupButton = document.getElementById("custom-catchup-button");
 const toastElement = document.getElementById("toast");
 
+const targetProgress = document.getElementById("target-progress");
+const targetProgressText = document.getElementById("target-progress-text");
+const targetProgressBar = document.getElementById("target-progress-bar");
+const targetProgressMessage = document.getElementById("target-progress-message");
+
+const doctorInstructionsCard = document.getElementById("doctor-instructions-card");
+const doctorInstructionsDisplay = document.getElementById("doctor-instructions-display");
+
 const todayView = document.getElementById("today-view");
 const historyView = document.getElementById("history-view");
+const settingsView = document.getElementById("settings-view");
 const navTodayButton = document.getElementById("nav-today");
 const navHistoryButton = document.getElementById("nav-history");
+const navSettingsButton = document.getElementById("nav-settings");
 
 const todayNoteInput = document.getElementById("today-note");
 const todayNoteStatus = document.getElementById("today-note-status");
 
 const historyListElement = document.getElementById("history-list");
 const historyEmptyElement = document.getElementById("history-empty");
+
+const settingStartTime = document.getElementById("setting-start-time");
+const settingEndTime = document.getElementById("setting-end-time");
+const settingDailyTarget = document.getElementById("setting-daily-target");
+const settingHaptics = document.getElementById("setting-haptics");
+const settingDoctorInstructions = document.getElementById("setting-doctor-instructions");
+const saveSettingsButton = document.getElementById("save-settings");
+const settingsError = document.getElementById("settings-error");
 
 const catchupModal = document.getElementById("catchup-modal");
 const catchupCloseButton = document.getElementById("catchup-close");
@@ -81,9 +107,46 @@ function createEntryId() {
 }
 
 
+function normalizeSettings(settings) {
+    const input = settings && typeof settings === "object"
+        ? settings
+        : {};
+
+    const dailyTarget = Number(input.dailyTarget);
+
+    return {
+        trackingStart: isValidTimeString(input.trackingStart)
+            ? input.trackingStart
+            : DEFAULT_SETTINGS.trackingStart,
+
+        trackingEnd: isValidTimeString(input.trackingEnd)
+            ? input.trackingEnd
+            : DEFAULT_SETTINGS.trackingEnd,
+
+        dailyTarget:
+            Number.isInteger(dailyTarget) &&
+            dailyTarget >= 1 &&
+            dailyTarget <= 100
+                ? dailyTarget
+                : null,
+
+        hapticsEnabled:
+            typeof input.hapticsEnabled === "boolean"
+                ? input.hapticsEnabled
+                : DEFAULT_SETTINGS.hapticsEnabled,
+
+        doctorInstructions:
+            typeof input.doctorInstructions === "string"
+                ? input.doctorInstructions
+                : DEFAULT_SETTINGS.doctorInstructions
+    };
+}
+
+
 function createEmptyState() {
     return {
         version: 1,
+        settings: { ...DEFAULT_SETTINGS },
         days: {}
     };
 }
@@ -123,6 +186,8 @@ function loadState() {
             return createEmptyState();
         }
 
+        parsed.settings = normalizeSettings(parsed.settings);
+
         Object.keys(parsed.days).forEach(dateKey => {
             parsed.days[dateKey] = normalizeDayData(parsed.days[dateKey]);
         });
@@ -140,6 +205,12 @@ function saveState() {
         STORAGE_KEY,
         JSON.stringify(state)
     );
+}
+
+
+function getSettings() {
+    state.settings = normalizeSettings(state.settings);
+    return state.settings;
 }
 
 
@@ -177,12 +248,62 @@ function getTodayTotal() {
 }
 
 
-function isTrackingWindowOpen() {
-    return new Date().getHours() >= 12;
+function isValidTimeString(value) {
+    return typeof value === "string" &&
+        /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
+}
+
+
+function timeStringToMinutes(value) {
+    const [hours, minutes] = value.split(":").map(Number);
+    return (hours * 60) + minutes;
+}
+
+
+function isTrackingWindowOpen(now = new Date()) {
+    const settings = getSettings();
+    const start = timeStringToMinutes(settings.trackingStart);
+    const end = timeStringToMinutes(settings.trackingEnd);
+    const current = (now.getHours() * 60) + now.getMinutes();
+
+    if (start === end) {
+        return false;
+    }
+
+    if (start < end) {
+        return current >= start && current < end;
+    }
+
+    return current >= start || current < end;
+}
+
+
+function formatTimeSetting(value) {
+    const [hours, minutes] = value.split(":").map(Number);
+    const date = new Date(2000, 0, 1, hours, minutes);
+
+    return new Intl.DateTimeFormat(
+        undefined,
+        {
+            hour: "numeric",
+            minute: minutes === 0 ? undefined : "2-digit"
+        }
+    ).format(date);
+}
+
+
+function getTrackingWindowLabel() {
+    const settings = getSettings();
+
+    return `${formatTimeSetting(settings.trackingStart)} - ${formatTimeSetting(settings.trackingEnd)}`;
 }
 
 
 function vibrate() {
+    if (!getSettings().hapticsEnabled) {
+        return;
+    }
+
     if ("vibrate" in navigator) {
         navigator.vibrate(30);
     }
@@ -258,15 +379,23 @@ function syncBodyModalState() {
 
 function setActiveView(viewName) {
     const showHistory = viewName === "history";
+    const showSettings = viewName === "settings";
+    const showToday = !showHistory && !showSettings;
 
-    todayView.hidden = showHistory;
+    todayView.hidden = !showToday;
     historyView.hidden = !showHistory;
+    settingsView.hidden = !showSettings;
 
-    navTodayButton.classList.toggle("active", !showHistory);
+    navTodayButton.classList.toggle("active", showToday);
     navHistoryButton.classList.toggle("active", showHistory);
+    navSettingsButton.classList.toggle("active", showSettings);
 
     if (showHistory) {
         renderHistory();
+    }
+
+    if (showSettings) {
+        renderSettingsForm();
     }
 
     window.scrollTo({
@@ -496,10 +625,6 @@ function saveDayNote(dateKey, value, statusElement) {
     }, 1500);
 
     renderHistory();
-
-    if (selectedHistoryDateKey === dateKey && !dayDetailModal.hidden) {
-        renderDayDetail(dateKey, false);
-    }
 }
 
 
@@ -552,6 +677,85 @@ function scheduleDetailNoteSave() {
 }
 
 
+function validateSettingsForm() {
+    const start = settingStartTime.value;
+    const end = settingEndTime.value;
+    const targetRaw = settingDailyTarget.value.trim();
+
+    if (!isValidTimeString(start) || !isValidTimeString(end)) {
+        return {
+            ok: false,
+            message: "Choose a valid start and end time."
+        };
+    }
+
+    if (start === end) {
+        return {
+            ok: false,
+            message: "Start and end time cannot be the same."
+        };
+    }
+
+    if (targetRaw) {
+        const target = Number(targetRaw);
+
+        if (!Number.isInteger(target) || target < 1 || target > 100) {
+            return {
+                ok: false,
+                message: "Daily target must be a whole number between 1 and 100."
+            };
+        }
+    }
+
+    return {
+        ok: true
+    };
+}
+
+
+function renderSettingsForm() {
+    const settings = getSettings();
+
+    settingStartTime.value = settings.trackingStart;
+    settingEndTime.value = settings.trackingEnd;
+    settingDailyTarget.value = settings.dailyTarget || "";
+    settingHaptics.checked = settings.hapticsEnabled;
+    settingDoctorInstructions.value = settings.doctorInstructions || "";
+    settingsError.hidden = true;
+    settingsError.textContent = "";
+}
+
+
+function saveSettings() {
+    const validation = validateSettingsForm();
+
+    if (!validation.ok) {
+        settingsError.textContent = validation.message;
+        settingsError.hidden = false;
+        return;
+    }
+
+    const targetRaw = settingDailyTarget.value.trim();
+
+    state.settings = {
+        trackingStart: settingStartTime.value,
+        trackingEnd: settingEndTime.value,
+        dailyTarget: targetRaw ? Number(targetRaw) : null,
+        hapticsEnabled: settingHaptics.checked,
+        doctorInstructions: settingDoctorInstructions.value.trim()
+    };
+
+    saveState();
+
+    settingsError.hidden = true;
+    settingsError.textContent = "";
+
+    render();
+    renderSettingsForm();
+    showToast("Settings saved");
+}
+
+
 function renderTally(count) {
     tallyElement.innerHTML = "";
 
@@ -582,6 +786,36 @@ function renderTally(count) {
         tallyElement.appendChild(group);
         remaining -= marks;
     }
+}
+
+
+function renderTargetProgress(count) {
+    const target = getSettings().dailyTarget;
+
+    if (!target) {
+        targetProgress.hidden = true;
+        return;
+    }
+
+    targetProgress.hidden = false;
+
+    const percentage = Math.min(100, Math.round((count / target) * 100));
+    const complete = count >= target;
+
+    targetProgressText.textContent = `${count} / ${target}`;
+    targetProgressBar.style.width = `${percentage}%`;
+    targetProgress.classList.toggle("complete", complete);
+    targetProgressMessage.textContent = complete
+        ? "Today's target reached."
+        : `${Math.max(0, target - count)} remaining to reach the set target.`;
+}
+
+
+function renderDoctorInstructions() {
+    const instructions = getSettings().doctorInstructions.trim();
+
+    doctorInstructionsCard.hidden = !instructions;
+    doctorInstructionsDisplay.textContent = instructions;
 }
 
 
@@ -950,15 +1184,16 @@ function closeDayDetail() {
 
 function renderTrackingWindow() {
     const open = isTrackingWindowOpen();
+    const label = getTrackingWindowLabel();
 
     if (open) {
-        trackingStatusElement.textContent = "12 PM - 12 AM";
+        trackingStatusElement.textContent = label;
         trackingStatusElement.classList.remove("closed");
         movementButton.disabled = false;
         return;
     }
 
-    trackingStatusElement.textContent = "Starts at 12 PM";
+    trackingStatusElement.textContent = `Tracking: ${label}`;
     trackingStatusElement.classList.add("closed");
     movementButton.disabled = true;
 }
@@ -970,6 +1205,8 @@ function render() {
 
     movementCountElement.textContent = count;
     renderTally(count);
+    renderTargetProgress(count);
+    renderDoctorInstructions();
     renderRecentEntries();
     renderTrackingWindow();
     renderHistory();
@@ -1063,9 +1300,11 @@ dayDetailModal.addEventListener("click", event => {
 
 navTodayButton.addEventListener("click", () => setActiveView("today"));
 navHistoryButton.addEventListener("click", () => setActiveView("history"));
+navSettingsButton.addEventListener("click", () => setActiveView("settings"));
 
 todayNoteInput.addEventListener("input", scheduleTodayNoteSave);
 detailNoteInput.addEventListener("input", scheduleDetailNoteSave);
+saveSettingsButton.addEventListener("click", saveSettings);
 
 
 document.addEventListener("keydown", event => {
@@ -1107,4 +1346,5 @@ let state = loadState();
 
 renderDate();
 render();
+renderSettingsForm();
 setActiveView("today");
