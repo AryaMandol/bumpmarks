@@ -18,64 +18,79 @@ BumpMarks is a small, privacy-first baby movement logging PWA.
 
 ## Project Location
 
-This development copy is intended to run from:
-
 ```text
 D:\Arya\Dev\bumpmarks
 ```
 
-## First-Time Setup
+## Setup
 
-Open Windows CMD:
+First-time dependency setup:
 
 ```cmd
 cd /d D:\Arya\Dev\bumpmarks
 setup.cmd
 ```
 
-## Run Automated Tests
+## Tests
 
 ```cmd
 cd /d D:\Arya\Dev\bumpmarks
 test.cmd
 ```
 
-Expected result:
-
-```text
-3 passed
-```
-
-## Run the Application
+## Run
 
 ```cmd
 cd /d D:\Arya\Dev\bumpmarks
 python app.py
 ```
 
-Then open:
+Open:
 
 ```text
 http://127.0.0.1:5000
 ```
 
-## Current Features
+## Current Milestones
 
-- Daily movement counter
-- One-tap movement logging
-- Visual tally marks
-- Catch-up entries
-- Undo
+### BM-001 - Complete
+
+- Flask/PWA bootstrap
+- Live movement logging
+- Tally display
 - Local browser storage
-- Recent entry list
-- 12 PM to 12 AM tracking window
-- Basic offline PWA support
+- Basic catch-up
+- Undo
+- Offline shell
+
+### BM-002 - Complete
+
+- Proper catch-up bottom sheet
+- Catch-up count stepper
+- Approximate timing choices
+- Edit catch-up entries
+- Delete entries with confirmation
+- Existing BM-001 data compatibility
+
+### BM-003 - Complete in this version
+
+- Today / History navigation
+- History ordered by date
+- Daily totals
+- Live vs catch-up breakdown
+- First-to-last recorded time summary
+- Day-detail sheet
+- Full day entry timeline
+- Optional daily notes
+- Notes editable for today and historical days
+- Auto-save notes locally
+- Existing BM-001/BM-002 local data remains compatible
 
 ## Privacy
 
-Movement information is stored using browser local storage.
+Movement information and notes are stored using browser local storage.
 
-The current application does not send movement records to the Flask server.
+The current application does not send movement records or notes to the Flask server.
 
 ## Medical Disclaimer
 

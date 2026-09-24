@@ -20,6 +20,17 @@ const entryCountLabelElement = document.getElementById("entry-count-label");
 const customCatchupButton = document.getElementById("custom-catchup-button");
 const toastElement = document.getElementById("toast");
 
+const todayView = document.getElementById("today-view");
+const historyView = document.getElementById("history-view");
+const navTodayButton = document.getElementById("nav-today");
+const navHistoryButton = document.getElementById("nav-history");
+
+const todayNoteInput = document.getElementById("today-note");
+const todayNoteStatus = document.getElementById("today-note-status");
+
+const historyListElement = document.getElementById("history-list");
+const historyEmptyElement = document.getElementById("history-empty");
+
 const catchupModal = document.getElementById("catchup-modal");
 const catchupCloseButton = document.getElementById("catchup-close");
 const catchupCountInput = document.getElementById("catchup-count");
@@ -31,8 +42,19 @@ const deleteModal = document.getElementById("delete-modal");
 const deleteCancelButton = document.getElementById("delete-cancel");
 const deleteConfirmButton = document.getElementById("delete-confirm");
 
+const dayDetailModal = document.getElementById("day-detail-modal");
+const dayDetailCloseButton = document.getElementById("day-detail-close");
+const dayDetailTitle = document.getElementById("day-detail-title");
+const dayDetailSummary = document.getElementById("day-detail-summary");
+const dayDetailEntries = document.getElementById("day-detail-entries");
+const detailNoteInput = document.getElementById("detail-note");
+const detailNoteStatus = document.getElementById("detail-note-status");
+
 let editingEntryId = null;
 let pendingDeleteEntryId = null;
+let selectedHistoryDateKey = null;
+let todayNoteTimer = null;
+let detailNoteTimer = null;
 
 
 function getLocalDateKey(date = new Date()) {
@@ -41,6 +63,12 @@ function getLocalDateKey(date = new Date()) {
     const day = String(date.getDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
+}
+
+
+function dateFromKey(dateKey) {
+    const [year, month, day] = dateKey.split("-").map(Number);
+    return new Date(year, month - 1, day);
 }
 
 
@@ -61,6 +89,26 @@ function createEmptyState() {
 }
 
 
+function normalizeDayData(day) {
+    if (!day || typeof day !== "object") {
+        return {
+            entries: [],
+            note: ""
+        };
+    }
+
+    if (!Array.isArray(day.entries)) {
+        day.entries = [];
+    }
+
+    if (typeof day.note !== "string") {
+        day.note = "";
+    }
+
+    return day;
+}
+
+
 function loadState() {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -74,6 +122,10 @@ function loadState() {
         if (!parsed || typeof parsed !== "object" || typeof parsed.days !== "object") {
             return createEmptyState();
         }
+
+        Object.keys(parsed.days).forEach(dateKey => {
+            parsed.days[dateKey] = normalizeDayData(parsed.days[dateKey]);
+        });
 
         return parsed;
     } catch (error) {
@@ -91,28 +143,37 @@ function saveState() {
 }
 
 
-function getTodayData() {
-    const key = getLocalDateKey();
-
-    if (!state.days[key]) {
-        state.days[key] = {
-            entries: []
+function getDayData(dateKey, createIfMissing = false) {
+    if (!state.days[dateKey] && createIfMissing) {
+        state.days[dateKey] = {
+            entries: [],
+            note: ""
         };
     }
 
-    if (!Array.isArray(state.days[key].entries)) {
-        state.days[key].entries = [];
+    if (!state.days[dateKey]) {
+        return null;
     }
 
-    return state.days[key];
+    return normalizeDayData(state.days[dateKey]);
+}
+
+
+function getTodayData() {
+    return getDayData(getLocalDateKey(), true);
+}
+
+
+function getDayTotal(day) {
+    return day.entries.reduce(
+        (total, entry) => total + Number(entry.count || 0),
+        0
+    );
 }
 
 
 function getTodayTotal() {
-    return getTodayData().entries.reduce(
-        (total, entry) => total + Number(entry.count || 0),
-        0
-    );
+    return getDayTotal(getTodayData());
 }
 
 
@@ -141,6 +202,38 @@ function formatTime(isoDate) {
 }
 
 
+function formatHistoryDate(dateKey) {
+    return new Intl.DateTimeFormat(
+        undefined,
+        {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        }
+    ).format(dateFromKey(dateKey));
+}
+
+
+function formatHistoryCardDate(dateKey) {
+    const date = dateFromKey(dateKey);
+    const todayKey = getLocalDateKey();
+
+    if (dateKey === todayKey) {
+        return "Today";
+    }
+
+    return new Intl.DateTimeFormat(
+        undefined,
+        {
+            weekday: "short",
+            day: "numeric",
+            month: "short"
+        }
+    ).format(date);
+}
+
+
 function showToast(message) {
     toastElement.textContent = message;
     toastElement.classList.add("visible");
@@ -154,8 +247,32 @@ function showToast(message) {
 
 
 function syncBodyModalState() {
-    const anyOpen = !catchupModal.hidden || !deleteModal.hidden;
+    const anyOpen =
+        !catchupModal.hidden ||
+        !deleteModal.hidden ||
+        !dayDetailModal.hidden;
+
     document.body.classList.toggle("modal-open", anyOpen);
+}
+
+
+function setActiveView(viewName) {
+    const showHistory = viewName === "history";
+
+    todayView.hidden = showHistory;
+    historyView.hidden = !showHistory;
+
+    navTodayButton.classList.toggle("active", !showHistory);
+    navHistoryButton.classList.toggle("active", showHistory);
+
+    if (showHistory) {
+        renderHistory();
+    }
+
+    window.scrollTo({
+        top: 0,
+        behavior: "instant"
+    });
 }
 
 
@@ -364,6 +481,77 @@ function confirmDeleteEntry() {
 }
 
 
+function saveDayNote(dateKey, value, statusElement) {
+    const day = getDayData(dateKey, true);
+    day.note = value.trim();
+
+    saveState();
+
+    statusElement.textContent = "Saved";
+
+    window.setTimeout(() => {
+        if (statusElement.textContent === "Saved") {
+            statusElement.textContent = "";
+        }
+    }, 1500);
+
+    renderHistory();
+
+    if (selectedHistoryDateKey === dateKey && !dayDetailModal.hidden) {
+        renderDayDetail(dateKey, false);
+    }
+}
+
+
+function scheduleTodayNoteSave() {
+    todayNoteStatus.textContent = "Saving…";
+
+    window.clearTimeout(todayNoteTimer);
+
+    todayNoteTimer = window.setTimeout(() => {
+        saveDayNote(
+            getLocalDateKey(),
+            todayNoteInput.value,
+            todayNoteStatus
+        );
+    }, 450);
+}
+
+
+function scheduleDetailNoteSave() {
+    if (!selectedHistoryDateKey) {
+        return;
+    }
+
+    detailNoteStatus.textContent = "Saving…";
+
+    window.clearTimeout(detailNoteTimer);
+
+    detailNoteTimer = window.setTimeout(() => {
+        const dateKey = selectedHistoryDateKey;
+        const value = detailNoteInput.value;
+        const day = getDayData(dateKey, true);
+
+        day.note = value.trim();
+        saveState();
+
+        detailNoteStatus.textContent = "Saved";
+
+        window.setTimeout(() => {
+            if (detailNoteStatus.textContent === "Saved") {
+                detailNoteStatus.textContent = "";
+            }
+        }, 1500);
+
+        if (dateKey === getLocalDateKey()) {
+            todayNoteInput.value = day.note;
+        }
+
+        renderHistory();
+    }, 450);
+}
+
+
 function renderTally(count) {
     tallyElement.innerHTML = "";
 
@@ -501,6 +689,265 @@ function renderRecentEntries() {
 }
 
 
+function getHistoryKeys() {
+    return Object.keys(state.days)
+        .filter(dateKey => {
+            const day = getDayData(dateKey);
+            return day && (day.entries.length > 0 || day.note.trim().length > 0);
+        })
+        .sort((a, b) => b.localeCompare(a));
+}
+
+
+function getEntryBreakdown(day) {
+    return day.entries.reduce(
+        (summary, entry) => {
+            const count = Number(entry.count || 0);
+
+            if (entry.type === "catchup") {
+                summary.catchup += count;
+            } else {
+                summary.live += count;
+            }
+
+            return summary;
+        },
+        {
+            live: 0,
+            catchup: 0
+        }
+    );
+}
+
+
+function getRecordedTimeRange(day) {
+    const validEntries = day.entries.filter(entry => entry.recordedAt);
+
+    if (validEntries.length === 0) {
+        return "No timed entries";
+    }
+
+    const times = validEntries
+        .map(entry => new Date(entry.recordedAt))
+        .filter(date => !Number.isNaN(date.getTime()))
+        .sort((a, b) => a - b);
+
+    if (times.length === 0) {
+        return "No timed entries";
+    }
+
+    const first = formatTime(times[0].toISOString());
+    const last = formatTime(times[times.length - 1].toISOString());
+
+    return first === last
+        ? first
+        : `${first} - ${last}`;
+}
+
+
+function renderHistory() {
+    const dateKeys = getHistoryKeys();
+
+    historyListElement.innerHTML = "";
+    historyEmptyElement.style.display = dateKeys.length ? "none" : "block";
+
+    dateKeys.forEach(dateKey => {
+        const day = getDayData(dateKey);
+        const total = getDayTotal(day);
+        const breakdown = getEntryBreakdown(day);
+
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "history-card";
+        card.addEventListener("click", () => openDayDetail(dateKey));
+
+        const top = document.createElement("div");
+        top.className = "history-card-top";
+
+        const left = document.createElement("div");
+
+        const date = document.createElement("p");
+        date.className = "history-date";
+        date.textContent = formatHistoryCardDate(dateKey);
+
+        const subtitle = document.createElement("p");
+        subtitle.className = "history-subtitle";
+        subtitle.textContent =
+            `${breakdown.live} live · ${breakdown.catchup} catch-up · ${getRecordedTimeRange(day)}`;
+
+        left.appendChild(date);
+        left.appendChild(subtitle);
+
+        const right = document.createElement("div");
+
+        const totalValue = document.createElement("div");
+        totalValue.className = "history-total";
+        totalValue.textContent = total;
+
+        const totalLabel = document.createElement("div");
+        totalLabel.className = "history-total-label";
+        totalLabel.textContent = "movements";
+
+        right.appendChild(totalValue);
+        right.appendChild(totalLabel);
+
+        top.appendChild(left);
+        top.appendChild(right);
+
+        card.appendChild(top);
+
+        if (day.note.trim()) {
+            const note = document.createElement("p");
+            note.className = "history-note-preview";
+
+            const preview = day.note.trim();
+            note.textContent = preview.length > 95
+                ? `${preview.slice(0, 95)}…`
+                : preview;
+
+            card.appendChild(note);
+        }
+
+        historyListElement.appendChild(card);
+    });
+}
+
+
+function createSummaryStat(value, label) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "summary-stat";
+
+    const valueElement = document.createElement("p");
+    valueElement.className = "summary-value";
+    valueElement.textContent = value;
+
+    const labelElement = document.createElement("p");
+    labelElement.className = "summary-label";
+    labelElement.textContent = label;
+
+    wrapper.appendChild(valueElement);
+    wrapper.appendChild(labelElement);
+
+    return wrapper;
+}
+
+
+function renderDayDetailEntries(day) {
+    dayDetailEntries.innerHTML = "";
+
+    if (day.entries.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "No movement entries for this day.";
+        dayDetailEntries.appendChild(empty);
+        return;
+    }
+
+    const entries = [...day.entries].sort(
+        (a, b) => new Date(a.recordedAt) - new Date(b.recordedAt)
+    );
+
+    entries.forEach(entry => {
+        const row = document.createElement("div");
+        row.className = "detail-entry";
+
+        const left = document.createElement("div");
+
+        const title = document.createElement("p");
+        title.className = "detail-entry-title";
+        title.textContent = entry.type === "catchup"
+            ? "Catch-up"
+            : "Movement";
+
+        const meta = document.createElement("p");
+        meta.className = "detail-entry-meta";
+
+        if (entry.type === "catchup") {
+            const approximateLabel = APPROXIMATE_TIME_LABELS[
+                entry.approximateTime || "unknown"
+            ] || APPROXIMATE_TIME_LABELS.unknown;
+
+            meta.textContent = `${approximateLabel} · entered ${formatTime(entry.recordedAt)}`;
+        } else {
+            meta.textContent = formatTime(entry.recordedAt);
+        }
+
+        const count = document.createElement("div");
+        count.className = "detail-entry-count";
+        count.textContent = `+${entry.count}`;
+
+        left.appendChild(title);
+        left.appendChild(meta);
+
+        row.appendChild(left);
+        row.appendChild(count);
+
+        dayDetailEntries.appendChild(row);
+    });
+}
+
+
+function renderDayDetail(dateKey, syncNoteValue = true) {
+    const day = getDayData(dateKey);
+
+    if (!day) {
+        return;
+    }
+
+    const total = getDayTotal(day);
+    const breakdown = getEntryBreakdown(day);
+
+    dayDetailTitle.textContent = formatHistoryDate(dateKey);
+
+    dayDetailSummary.innerHTML = "";
+    dayDetailSummary.appendChild(createSummaryStat(total, "Total"));
+    dayDetailSummary.appendChild(createSummaryStat(breakdown.live, "Live"));
+    dayDetailSummary.appendChild(createSummaryStat(breakdown.catchup, "Catch-up"));
+
+    renderDayDetailEntries(day);
+
+    if (syncNoteValue) {
+        detailNoteInput.value = day.note || "";
+    }
+}
+
+
+function openDayDetail(dateKey) {
+    const day = getDayData(dateKey);
+
+    if (!day) {
+        return;
+    }
+
+    selectedHistoryDateKey = dateKey;
+    detailNoteStatus.textContent = "";
+    renderDayDetail(dateKey);
+    dayDetailModal.hidden = false;
+    syncBodyModalState();
+}
+
+
+function closeDayDetail() {
+    window.clearTimeout(detailNoteTimer);
+
+    if (selectedHistoryDateKey && detailNoteStatus.textContent === "Saving…") {
+        const day = getDayData(selectedHistoryDateKey, true);
+        day.note = detailNoteInput.value.trim();
+        saveState();
+        renderHistory();
+
+        if (selectedHistoryDateKey === getLocalDateKey()) {
+            todayNoteInput.value = day.note;
+        }
+    }
+
+    dayDetailModal.hidden = true;
+    selectedHistoryDateKey = null;
+    detailNoteStatus.textContent = "";
+    syncBodyModalState();
+}
+
+
 function renderTrackingWindow() {
     const open = isTrackingWindowOpen();
 
@@ -519,13 +966,19 @@ function renderTrackingWindow() {
 
 function render() {
     const count = getTodayTotal();
+    const today = getTodayData();
 
     movementCountElement.textContent = count;
     renderTally(count);
     renderRecentEntries();
     renderTrackingWindow();
+    renderHistory();
 
-    undoButton.disabled = getTodayData().entries.length === 0;
+    if (document.activeElement !== todayNoteInput) {
+        todayNoteInput.value = today.note || "";
+    }
+
+    undoButton.disabled = today.entries.length === 0;
 }
 
 
@@ -598,6 +1051,23 @@ deleteModal.addEventListener("click", event => {
 });
 
 
+dayDetailCloseButton.addEventListener("click", closeDayDetail);
+
+
+dayDetailModal.addEventListener("click", event => {
+    if (event.target === dayDetailModal) {
+        closeDayDetail();
+    }
+});
+
+
+navTodayButton.addEventListener("click", () => setActiveView("today"));
+navHistoryButton.addEventListener("click", () => setActiveView("history"));
+
+todayNoteInput.addEventListener("input", scheduleTodayNoteSave);
+detailNoteInput.addEventListener("input", scheduleDetailNoteSave);
+
+
 document.addEventListener("keydown", event => {
     if (event.key !== "Escape") {
         return;
@@ -610,6 +1080,11 @@ document.addEventListener("keydown", event => {
 
     if (!catchupModal.hidden) {
         closeCatchupModal();
+        return;
+    }
+
+    if (!dayDetailModal.hidden) {
+        closeDayDetail();
     }
 });
 
@@ -632,3 +1107,4 @@ let state = loadState();
 
 renderDate();
 render();
+setActiveView("today");
