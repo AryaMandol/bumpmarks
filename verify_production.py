@@ -64,6 +64,14 @@ def main() -> None:
     if status != 200 or b'id="movement-button"' not in app_body:
         fail("Tracker page verification failed")
 
+    _, status, _, physical_app_body = fetch(base_url, "/app/index.html")
+    if status != 200 or b'id="movement-button"' not in physical_app_body:
+        fail("Canonical /app/index.html is not directly available")
+
+    _, status, _, offline_body = fetch(base_url, "/offline/index.html")
+    if status != 200 or b"BumpMarks is offline" not in offline_body:
+        fail("Canonical offline document is not directly available")
+
     _, status, _, health_body = fetch(base_url, "/healthz")
     if status != 200:
         fail("Health endpoint did not return 200")
@@ -77,12 +85,18 @@ def main() -> None:
         fail(f"Unexpected health response: {health}")
 
     _, status, sw_headers, sw_body = fetch(base_url, "/sw.js")
-    if status != 200 or b"CACHE_NAME" not in sw_body:
-        fail("Service worker verification failed")
+    if status != 200 or b'bumpmarks-v13' not in sw_body:
+        fail("Service worker verification failed or old worker is still deployed")
+    if b'/app/index.html' not in sw_body or b'self.skipWaiting' not in sw_body:
+        fail("Production service worker is missing the offline app-shell fix")
 
     cache_control = sw_headers.get("Cache-Control", "")
     if "no-cache" not in cache_control.lower() and "no-store" not in cache_control.lower():
         fail(f"Service worker cache header is too strong: {cache_control!r}")
+
+    worker_scope = sw_headers.get("Service-Worker-Allowed", "")
+    if worker_scope.strip() != "/":
+        fail(f"Unexpected service-worker scope header: {worker_scope!r}")
 
     _, status, _, manifest_body = fetch(base_url, "/static/manifest.webmanifest")
     if status != 200:

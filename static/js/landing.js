@@ -63,13 +63,16 @@ function registerLandingServiceWorker() {
     }
 
     navigator.serviceWorker
-        .register("/sw.js")
+        .register("/sw.js", {
+            scope: "/",
+            updateViaCache: "none"
+        })
+        .then(registration => registration.update())
         .catch(error => {
             console.error("Service worker registration failed.", error);
         });
 }
 
 
-window.addEventListener("load", registerLandingServiceWorker);
-
+registerLandingServiceWorker();
 renderDemo();

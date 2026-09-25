@@ -1,7 +1,7 @@
 services:
   - type: web
     runtime: static
-    name: bumpmarks
+    name: bumpmarks-pwa
     buildCommand: python build_static.py && python verify_release.py --skip-build
     staticPublishPath: ./dist
     autoDeployTrigger: checksPass
@@ -43,6 +43,9 @@ services:
       - path: /sw.js
         name: Cache-Control
         value: "no-cache, no-store, must-revalidate"
+      - path: /sw.js
+        name: Service-Worker-Allowed
+        value: "/"
       - path: /static/images/*
         name: Cache-Control
         value: "public, max-age=86400"

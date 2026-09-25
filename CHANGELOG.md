@@ -4,8 +4,6 @@ All notable changes to BumpMarks are documented here.
 
 ## [1.0.0] - 2026-09-24
 
-- Fixed production offline support by registering the service worker from the public landing page and making large image precaching non-blocking.
-
 ### Added
 
 - One-tap live baby movement recording.
@@ -33,3 +31,13 @@ All notable changes to BumpMarks are documented here.
 - No cloud storage requirement.
 - No AI health interpretation.
 - No diagnostic or normal/abnormal fetal movement classification.
+
+
+## BM-008B - production offline and mobile navigation fix
+
+- Precaches canonical static application documents instead of relying on Render rewrite aliases.
+- Seeds `/app` and `/app/` cache aliases for installed-PWA launches.
+- Activates updated service workers immediately and claims open clients.
+- Registers the worker immediately with root scope and `updateViaCache: none`.
+- Replaces text-glyph bottom-navigation icons with consistently sized SVG icons.
+- Makes tracking-window labels deterministic (`12 PM`, `12 AM`) and clarifies the closed state.

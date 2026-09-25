@@ -701,16 +701,18 @@ button {
 }
 
 .nav-button {
-    min-height: 50px;
+    min-height: 62px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 7px;
+    gap: 4px;
     border: 0;
     border-radius: 13px;
     background: transparent;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 10px;
+    line-height: 1;
     font-weight: 700;
     cursor: pointer;
 }
@@ -721,16 +723,22 @@ button {
 }
 
 .nav-icon {
-    font-size: 11px;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
-.nav-history-icon {
-    font-size: 18px;
-    line-height: 0;
-}
-
-.nav-settings-icon {
-    font-size: 15px;
+.nav-label {
+    display: block;
+    min-height: 10px;
+    line-height: 1;
+    text-align: center;
 }
 
 .modal-backdrop[hidden] {
@@ -1078,16 +1086,7 @@ button {
     overflow-wrap: anywhere;
 }
 
-.nav-export-icon {
-    font-size: 17px;
-}
 
-@media (max-width: 420px) {
-    .nav-button {
-        gap: 4px;
-        font-size: 11px;
-    }
-}
 
 
 .update-banner {
@@ -1182,7 +1181,7 @@ button {
     }
 
     .nav-button {
-        font-size: 10px;
+        font-size: 9px;
     }
 }
 
@@ -1641,9 +1640,6 @@ button {
     line-height: 1.4;
 }
 
-.nav-analytics-icon {
-    font-size: 14px;
-}
 
 @media (max-width: 430px) {
     .analytics-summary-grid {
@@ -1654,12 +1650,6 @@ button {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .bottom-nav .nav-button {
-        flex-direction: column;
-        gap: 2px;
-        font-size: 9px;
-        line-height: 1.05;
-    }
 }
 
 @media print {
@@ -1777,4 +1767,9 @@ button {
 .chart-bar-segment.secondary,
 .analytics-legend-swatch.secondary {
     background: #8fa4df;
+}
+
+
+#nav-today .nav-icon {
+    stroke: none;
 }

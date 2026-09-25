@@ -157,13 +157,14 @@ Restore validates the backup structure before replacing local data.
 
 CSV export is intended for readable review in spreadsheet software and includes protection against spreadsheet formula injection from user-entered text.
 
-## Offline behavior
-
-BumpMarks registers its service worker from both the public landing page and the tracker. After one successful online load, the landing page and `/app` can reopen from the cached app shell when the network is unavailable.
-
-The first-ever visit still requires a network connection so the browser can download and install the service worker and its core cache.
-
 ## PWA behavior
+
+### Offline production behavior
+
+The installed tracker precaches the physical `/app/index.html` application shell and claims clients immediately after a service-worker update. The `/app` and `/app/` aliases are also seeded in Cache Storage so installed Android PWAs can reopen the tracker without a network connection after one successful online load.
+
+To prepare a device for offline use, open `/app` once while online and let the page finish loading. After a new deployment, reopen the app online once so the updated service worker can activate.
+
 
 BumpMarks includes:
 

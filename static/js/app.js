@@ -259,7 +259,10 @@ function registerServiceWorker() {
     });
 
     navigator.serviceWorker
-        .register("/sw.js")
+        .register("/sw.js", {
+            scope: "/",
+            updateViaCache: "none"
+        })
         .then(registration => {
             if (registration.waiting) {
                 showUpdateAvailable(registration.waiting);
@@ -603,15 +606,13 @@ function isTrackingWindowOpen(now = new Date()) {
 
 function formatTimeSetting(value) {
     const [hours, minutes] = value.split(":").map(Number);
-    const date = new Date(2000, 0, 1, hours, minutes);
+    const suffix = hours >= 12 ? "PM" : "AM";
+    const displayHour = hours % 12 || 12;
+    const minuteText = String(minutes).padStart(2, "0");
 
-    return new Intl.DateTimeFormat(
-        undefined,
-        {
-            hour: "numeric",
-            minute: minutes === 0 ? undefined : "2-digit"
-        }
-    ).format(date);
+    return minutes === 0
+        ? `${displayHour} ${suffix}`
+        : `${displayHour}:${minuteText} ${suffix}`;
 }
 
 
@@ -2551,18 +2552,22 @@ function closeDayDetail() {
 
 function renderTrackingWindow() {
     const open = isTrackingWindowOpen();
+    const settings = getSettings();
     const label = getTrackingWindowLabel();
 
     if (open) {
         trackingStatusElement.textContent = label;
         trackingStatusElement.classList.remove("closed");
         movementButton.disabled = false;
+        movementButton.innerHTML = '<span class="plus">+</span> Baby Moved';
         return;
     }
 
-    trackingStatusElement.textContent = `Tracking: ${label}`;
+    trackingStatusElement.textContent =
+        `Closed · starts ${formatTimeSetting(settings.trackingStart)}`;
     trackingStatusElement.classList.add("closed");
     movementButton.disabled = true;
+    movementButton.textContent = "Live tracking closed";
 }
 
 
@@ -2813,10 +2818,8 @@ document.addEventListener("visibilitychange", () => {
 
 window.setInterval(refreshTimeSensitiveUi, 60_000);
 
-window.addEventListener("load", () => {
-    registerPwaHandlers();
-    registerServiceWorker();
-});
+registerPwaHandlers();
+registerServiceWorker();
 
 
 let state = loadState();

@@ -78,6 +78,19 @@ def main() -> None:
     require(manifest.get("display") == "standalone", "Manifest must be standalone")
 
     service_worker = text(ROOT / "static/sw.js")
+    require(
+        'const CACHE_NAME = "bumpmarks-v13";' in service_worker,
+        "Unexpected service-worker cache version",
+    )
+    require(
+        'const APP_DOCUMENT = "/app/index.html";' in service_worker,
+        "Service worker must precache the canonical app document",
+    )
+    require(
+        'await self.skipWaiting()' in service_worker and
+        'await self.clients.claim()' in service_worker,
+        "Service worker must activate and claim clients immediately",
+    )
     for asset in [
         "/static/images/landing-mother-window.png",
         "/static/images/landing-mother-phone.png",

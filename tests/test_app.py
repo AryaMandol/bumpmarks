@@ -270,7 +270,7 @@ def test_update_banner_is_present():
 def test_service_worker_has_offline_and_update_handling():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v12";' in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v13";' in service_worker
     assert '"/offline"' in service_worker
     assert 'event.request.mode === "navigate"' in service_worker
     assert '"SKIP_WAITING"' in service_worker
@@ -444,7 +444,7 @@ def test_analytics_css_includes_mobile_and_print_support():
     assert ".analytics-summary-grid" in stylesheet
     assert ".doctor-table-wrap" in stylesheet
     assert "@media print" in stylesheet
-    assert ".nav-analytics-icon" in stylesheet
+    assert "@media (max-width: 430px)" in stylesheet
 
 
 def test_app_route_loads():
@@ -587,22 +587,87 @@ def test_landing_page_registers_service_worker_and_manifest():
     assert b'rel="manifest"' in response.data
     assert b'manifest.webmanifest' in response.data
     assert 'navigator.serviceWorker' in javascript
-    assert '.register("/sw.js")' in javascript
+    assert '.register("/sw.js", {' in javascript
+    assert 'scope: "/"' in javascript
+    assert 'updateViaCache: "none"' in javascript
 
 
-def test_service_worker_uses_resilient_optional_asset_precache():
+def test_service_worker_precaches_canonical_app_documents():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v12";' in service_worker
-    assert "const CORE_SHELL" in service_worker
-    assert "const OPTIONAL_ASSETS" in service_worker
-    assert "cache.addAll(CORE_SHELL)" in service_worker
-    assert "Promise.allSettled" in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v13";' in service_worker
+    assert 'const APP_DOCUMENT = "/app/index.html";' in service_worker
+    assert 'const OFFLINE_DOCUMENT = "/offline/index.html";' in service_worker
+    assert 'cache.put("/app", appDocument.clone())' in service_worker
+    assert 'cache.put("/app/", appDocument.clone())' in service_worker
+    assert 'await self.skipWaiting()' in service_worker
+    assert 'await self.clients.claim()' in service_worker
 
 
-def test_service_worker_offline_navigation_covers_root_and_app():
-    service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
+def test_app_registers_service_worker_immediately_with_root_scope():
+    javascript = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
 
-    assert 'await caches.match("/app")' in service_worker
-    assert 'await caches.match("/")' in service_worker
-    assert 'await caches.match("/offline")' in service_worker
+    assert '.register("/sw.js", {' in javascript
+    assert 'scope: "/"' in javascript
+    assert 'updateViaCache: "none"' in javascript
+    assert 'registerPwaHandlers();\nregisterServiceWorker();' in javascript
+    assert 'window.addEventListener("load", () => {\n    registerPwaHandlers();' not in javascript
+
+
+def test_bottom_navigation_uses_consistent_svg_icons():
+    client = app.test_client()
+
+    response = client.get("/app")
+
+    assert response.data.count(b'class="nav-icon"') == 5
+    assert b'nav-history-icon' not in response.data
+    assert b'nav-export-icon' not in response.data
+    assert b'nav-analytics-icon' not in response.data
+    assert b'class="nav-label">History</span>' in response.data
+
+
+def test_bottom_navigation_icon_css_is_metric_independent():
+    stylesheet = (ROOT / "static" / "css" / "app.css").read_text(encoding="utf-8")
+
+    assert 'width: 20px;' in stylesheet
+    assert 'height: 20px;' in stylesheet
+    assert 'stroke: currentColor;' in stylesheet
+    assert '.nav-label' in stylesheet
+
+
+def test_tracking_window_uses_explicit_twelve_hour_labels():
+    javascript = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
+
+    assert 'const suffix = hours >= 12 ? "PM" : "AM";' in javascript
+    assert 'Closed · starts ${formatTimeSetting(settings.trackingStart)}' in javascript
+    assert 'movementButton.textContent = "Live tracking closed";' in javascript
+
+
+def test_release_verifier_checks_offline_worker_contract():
+    verifier = (ROOT / "verify_release.py").read_text(encoding="utf-8")
+
+    assert 'bumpmarks-v13' in verifier
+    assert '/app/index.html' in verifier
+    assert 'self.skipWaiting()' in verifier
+    assert 'self.clients.claim()' in verifier
+
+
+def test_production_verifier_checks_canonical_offline_documents():
+    verifier = (ROOT / "verify_production.py").read_text(encoding="utf-8")
+
+    assert 'fetch(base_url, "/app/index.html")' in verifier
+    assert 'fetch(base_url, "/offline/index.html")' in verifier
+    assert 'bumpmarks-v13' in verifier
+
+
+def test_render_blueprint_allows_root_service_worker_scope():
+    blueprint = (ROOT / "render.yaml").read_text(encoding="utf-8")
+
+    assert "Service-Worker-Allowed" in blueprint
+    assert 'value: "/"' in blueprint
+
+
+def test_production_verifier_checks_service_worker_scope_header():
+    verifier = (ROOT / "verify_production.py").read_text(encoding="utf-8")
+
+    assert 'Service-Worker-Allowed' in verifier

@@ -75,3 +75,18 @@ creates the annotated `v1.0.0` tag, and pushes it.
 
 The tag triggers `.github/workflows/release.yml`, which runs CI again, builds
 the production bundle, creates a ZIP asset, and publishes the GitHub Release.
+
+
+## Offline verification on Android
+
+After deploying a service-worker change:
+
+1. Keep the phone online and open the deployed `/app` URL.
+2. Allow the page to reload once if the new worker takes control.
+3. Close and reopen the installed BumpMarks app once while still online.
+4. Turn on airplane mode or disable both Wi-Fi and mobile data.
+5. Reopen BumpMarks from the installed app icon. The tracker should load from Cache Storage and existing localStorage records should still be present.
+
+Do not clear site storage while testing. Clearing site storage can remove locally stored movement records.
+
+`verify_production.cmd <https-url>` checks that the canonical `/app/index.html` and `/offline/index.html` documents, current service worker, root worker scope, manifest, and security headers are present on the live Render deployment.
