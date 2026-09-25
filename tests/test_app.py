@@ -270,7 +270,7 @@ def test_update_banner_is_present():
 def test_service_worker_has_offline_and_update_handling():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v11";' in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v12";' in service_worker
     assert '"/offline"' in service_worker
     assert 'event.request.mode === "navigate"' in service_worker
     assert '"SKIP_WAITING"' in service_worker
@@ -576,3 +576,33 @@ def test_service_worker_precaches_landing_media():
     assert "/static/images/app-preview.png" in service_worker
     assert "/static/images/landing-mother-window.png" in service_worker
     assert "/static/images/landing-mother-phone.png" in service_worker
+
+
+def test_landing_page_registers_service_worker_and_manifest():
+    client = app.test_client()
+
+    response = client.get("/")
+    javascript = (ROOT / "static" / "js" / "landing.js").read_text(encoding="utf-8")
+
+    assert b'rel="manifest"' in response.data
+    assert b'manifest.webmanifest' in response.data
+    assert 'navigator.serviceWorker' in javascript
+    assert '.register("/sw.js")' in javascript
+
+
+def test_service_worker_uses_resilient_optional_asset_precache():
+    service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
+
+    assert 'const CACHE_NAME = "bumpmarks-v12";' in service_worker
+    assert "const CORE_SHELL" in service_worker
+    assert "const OPTIONAL_ASSETS" in service_worker
+    assert "cache.addAll(CORE_SHELL)" in service_worker
+    assert "Promise.allSettled" in service_worker
+
+
+def test_service_worker_offline_navigation_covers_root_and_app():
+    service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
+
+    assert 'await caches.match("/app")' in service_worker
+    assert 'await caches.match("/")' in service_worker
+    assert 'await caches.match("/offline")' in service_worker

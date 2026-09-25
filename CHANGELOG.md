@@ -4,6 +4,8 @@ All notable changes to BumpMarks are documented here.
 
 ## [1.0.0] - 2026-09-24
 
+- Fixed production offline support by registering the service worker from the public landing page and making large image precaching non-blocking.
+
 ### Added
 
 - One-tap live baby movement recording.

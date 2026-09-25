@@ -157,6 +157,12 @@ Restore validates the backup structure before replacing local data.
 
 CSV export is intended for readable review in spreadsheet software and includes protection against spreadsheet formula injection from user-entered text.
 
+## Offline behavior
+
+BumpMarks registers its service worker from both the public landing page and the tracker. After one successful online load, the landing page and `/app` can reopen from the cached app shell when the network is unavailable.
+
+The first-ever visit still requires a network connection so the browser can download and install the service worker and its core cache.
+
 ## PWA behavior
 
 BumpMarks includes:
