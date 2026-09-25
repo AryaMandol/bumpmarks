@@ -40,6 +40,18 @@ services:
       - path: /*
         name: Strict-Transport-Security
         value: "max-age=31536000"
+      - path: /app/index.html
+        name: Cache-Control
+        value: "no-cache, must-revalidate"
+      - path: /index.html
+        name: Cache-Control
+        value: "no-cache, must-revalidate"
+      - path: /static/js/*
+        name: Cache-Control
+        value: "no-cache, must-revalidate"
+      - path: /static/css/*
+        name: Cache-Control
+        value: "no-cache, must-revalidate"
       - path: /sw.js
         name: Cache-Control
         value: "no-cache, no-store, must-revalidate"

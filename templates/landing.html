@@ -8,10 +8,10 @@
 
     <title>BumpMarks - Private baby movement tracking</title>
 
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}?v=bm008c">
     <link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}?v=bm008c">
 </head>
 <body>
 
@@ -165,7 +165,7 @@
 
             <figure class="product-app-shot">
                 <img
-                    src="{{ url_for('static', filename='images/app-preview.png') }}"
+                    src="{{ url_for('static', filename='images/app-preview.png') }}?v=bm008c"
                     alt="BumpMarks app showing the daily movement counter and one-tap movement button"
                     width="390"
                     height="844"
@@ -244,6 +244,6 @@
     <p>A private movement logging tool. Not a diagnostic or medical decision-making system.</p>
 </footer>
 
-<script src="{{ url_for('static', filename='js/landing.js') }}"></script>
+<script src="{{ url_for('static', filename='js/landing.js') }}?v=bm008c"></script>
 </body>
 </html>

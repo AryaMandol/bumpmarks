@@ -57,6 +57,7 @@ def main() -> None:
         "static/manifest.webmanifest",
         "static/images/landing-mother-window.png",
         "static/images/landing-mother-phone.png",
+        "static/images/app-preview.png",
     ]
 
     for relative in required:
@@ -79,12 +80,20 @@ def main() -> None:
 
     service_worker = text(ROOT / "static/sw.js")
     require(
-        'const CACHE_NAME = "bumpmarks-v13";' in service_worker,
+        'const CACHE_NAME = "bumpmarks-v14";' in service_worker,
         "Unexpected service-worker cache version",
     )
     require(
         'const APP_DOCUMENT = "/app/index.html";' in service_worker,
         "Service worker must precache the canonical app document",
+    )
+    require(
+        'networkFirstNavigation(event, APP_DOCUMENT)' in service_worker,
+        "App navigation must be network-first with offline fallback",
+    )
+    require(
+        'networkFirstAsset(event.request)' in service_worker,
+        "App code assets must refresh online and fall back offline",
     )
     require(
         'await self.skipWaiting()' in service_worker and

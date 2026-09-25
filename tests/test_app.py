@@ -270,7 +270,7 @@ def test_update_banner_is_present():
 def test_service_worker_has_offline_and_update_handling():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v13";' in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v14";' in service_worker
     assert '"/offline"' in service_worker
     assert 'event.request.mode === "navigate"' in service_worker
     assert '"SKIP_WAITING"' in service_worker
@@ -512,8 +512,10 @@ def test_service_worker_caches_landing_and_app_assets():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
     assert '"/app"' in service_worker
-    assert '"/static/css/landing.css"' in service_worker
-    assert '"/static/js/landing.js"' in service_worker
+    assert 'const LANDING_CSS = `/static/css/landing.css?v=${ASSET_REV}`;' in service_worker
+    assert 'const LANDING_JS = `/static/js/landing.js?v=${ASSET_REV}`;' in service_worker
+    assert "LANDING_CSS" in service_worker
+    assert "LANDING_JS" in service_worker
 
 
 def test_landing_images_exist_locally():
@@ -595,7 +597,7 @@ def test_landing_page_registers_service_worker_and_manifest():
 def test_service_worker_precaches_canonical_app_documents():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v13";' in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v14";' in service_worker
     assert 'const APP_DOCUMENT = "/app/index.html";' in service_worker
     assert 'const OFFLINE_DOCUMENT = "/offline/index.html";' in service_worker
     assert 'cache.put("/app", appDocument.clone())' in service_worker
@@ -646,7 +648,7 @@ def test_tracking_window_uses_explicit_twelve_hour_labels():
 def test_release_verifier_checks_offline_worker_contract():
     verifier = (ROOT / "verify_release.py").read_text(encoding="utf-8")
 
-    assert 'bumpmarks-v13' in verifier
+    assert 'bumpmarks-v14' in verifier
     assert '/app/index.html' in verifier
     assert 'self.skipWaiting()' in verifier
     assert 'self.clients.claim()' in verifier
@@ -657,7 +659,7 @@ def test_production_verifier_checks_canonical_offline_documents():
 
     assert 'fetch(base_url, "/app/index.html")' in verifier
     assert 'fetch(base_url, "/offline/index.html")' in verifier
-    assert 'bumpmarks-v13' in verifier
+    assert 'bumpmarks-v14' in verifier
 
 
 def test_render_blueprint_allows_root_service_worker_scope():
@@ -671,3 +673,58 @@ def test_production_verifier_checks_service_worker_scope_header():
     verifier = (ROOT / "verify_production.py").read_text(encoding="utf-8")
 
     assert 'Service-Worker-Allowed' in verifier
+
+
+def test_app_assets_are_revisioned_to_break_stale_pwa_cache():
+    client = app.test_client()
+    response = client.get("/app")
+
+    assert b"/static/css/app.css?v=bm008c" in response.data
+    assert b"/static/js/app.js?v=bm008c" in response.data
+
+
+def test_service_worker_uses_network_first_for_app_and_code_assets():
+    service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
+
+    assert 'const CACHE_NAME = "bumpmarks-v14";' in service_worker
+    assert "networkFirstNavigation(event, APP_DOCUMENT)" in service_worker
+    assert "networkFirstAsset(event.request)" in service_worker
+    assert 'fetch(event.request, { cache: "no-store" })' in service_worker
+    assert 'caches.match(request, { ignoreSearch: true })' in service_worker
+
+
+def test_app_has_explicit_offline_interaction_status():
+    client = app.test_client()
+    response = client.get("/app")
+    javascript = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
+
+    assert b'id="connection-banner"' in response.data
+    assert b"Entries and navigation still work on this device." in response.data
+    assert "renderConnectionState" in javascript
+    assert 'window.addEventListener("offline", renderConnectionState)' in javascript
+
+
+def test_mobile_navigation_has_fixed_svg_geometry():
+    stylesheet = (ROOT / "static" / "css" / "app.css").read_text(encoding="utf-8")
+
+    assert "grid-template-rows: 22px 12px" in stylesheet
+    assert "width: 21px" in stylesheet
+    assert "height: 21px" in stylesheet
+    assert "grid-template-columns: repeat(5, minmax(0, 1fr))" in stylesheet
+
+
+def test_mobile_today_header_stacks_for_narrow_screens():
+    stylesheet = (ROOT / "static" / "css" / "app.css").read_text(encoding="utf-8")
+
+    assert "@media (max-width: 440px)" in stylesheet
+    assert ".date-row" in stylesheet
+    assert "grid-template-columns: minmax(0, 1fr)" in stylesheet
+
+
+def test_render_disables_strong_cache_for_app_code():
+    blueprint = (ROOT / "render.yaml").read_text(encoding="utf-8")
+
+    assert "path: /static/js/*" in blueprint
+    assert "path: /static/css/*" in blueprint
+    assert "path: /app/index.html" in blueprint
+    assert 'value: "no-cache, must-revalidate"' in blueprint

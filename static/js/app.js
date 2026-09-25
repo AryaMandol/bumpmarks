@@ -28,6 +28,7 @@ const entryCountLabelElement = document.getElementById("entry-count-label");
 const customCatchupButton = document.getElementById("custom-catchup-button");
 const toastElement = document.getElementById("toast");
 const storageWarningElement = document.getElementById("storage-warning");
+const connectionBannerElement = document.getElementById("connection-banner");
 const mainContent = document.getElementById("main-content");
 const bottomNav = document.querySelector(".bottom-nav");
 
@@ -263,7 +264,12 @@ function registerServiceWorker() {
             scope: "/",
             updateViaCache: "none"
         })
-        .then(registration => {
+        .then(async registration => {
+            try {
+                await registration.update();
+            } catch (error) {
+                console.warn("Service worker update check failed.", error);
+            }
             if (registration.waiting) {
                 showUpdateAvailable(registration.waiting);
             }
@@ -285,11 +291,22 @@ function registerServiceWorker() {
                 });
             });
 
-            registration.update().catch(() => {});
         })
         .catch(error => {
             console.error("Service worker registration failed.", error);
         });
+}
+
+
+
+function renderConnectionState() {
+    const offline = navigator.onLine === false;
+
+    if (!connectionBannerElement) {
+        return;
+    }
+
+    connectionBannerElement.hidden = !offline;
 }
 
 
@@ -2807,6 +2824,10 @@ applyUpdateButton.addEventListener("click", applyPendingUpdate);
 undoButton.addEventListener("click", undoLastEntry);
 
 
+
+window.addEventListener("online", renderConnectionState);
+window.addEventListener("offline", renderConnectionState);
+renderConnectionState();
 
 window.addEventListener("focus", refreshTimeSensitiveUi);
 

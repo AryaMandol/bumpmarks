@@ -41,3 +41,11 @@ All notable changes to BumpMarks are documented here.
 - Registers the worker immediately with root scope and `updateViaCache: none`.
 - Replaces text-glyph bottom-navigation icons with consistently sized SVG icons.
 - Makes tracking-window labels deterministic (`12 PM`, `12 AM`) and clarifies the closed state.
+
+### BM-008C production hotfix
+
+- Refresh app HTML and code assets from the network when available, while preserving offline fallback.
+- Revision app CSS/JavaScript URLs to prevent stale installed-PWA assets.
+- Add explicit offline-state messaging while preserving local actions.
+- Normalize five-tab mobile navigation geometry and small-screen layouts.
+- Replace the placeholder product screenshot with a real application capture.

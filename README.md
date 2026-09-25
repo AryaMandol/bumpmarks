@@ -246,3 +246,7 @@ This opens Render with the current GitHub repository preselected. See `DEPLOYMEN
 BumpMarks is released under the MIT License. See `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md`, and `ASSETS.md`.
 
 The first public release is version `1.0.0`.
+
+## Production hotfix BM-008C
+
+BM-008C makes application navigations and JavaScript/CSS network-first while online, with cached fallbacks offline. Critical assets are revisioned so an installed PWA cannot remain pinned to an older interface after deployment. The mobile bottom navigation and small-screen layout are also hardened.

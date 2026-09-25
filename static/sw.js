@@ -1,16 +1,24 @@
-const CACHE_NAME = "bumpmarks-v13";
+const CACHE_NAME = "bumpmarks-v14";
+const ASSET_REV = "bm008c";
 
 const APP_DOCUMENT = "/app/index.html";
 const LANDING_DOCUMENT = "/index.html";
 const OFFLINE_DOCUMENT = "/offline/index.html";
 
+const APP_CSS = `/static/css/app.css?v=${ASSET_REV}`;
+const APP_JS = `/static/js/app.js?v=${ASSET_REV}`;
+const LANDING_CSS = `/static/css/landing.css?v=${ASSET_REV}`;
+const LANDING_JS = `/static/js/landing.js?v=${ASSET_REV}`;
+const MANIFEST = `/static/manifest.webmanifest?v=${ASSET_REV}`;
+const APP_PREVIEW = `/static/images/app-preview.png?v=${ASSET_REV}`;
+
 const CORE_ASSETS = [
     APP_DOCUMENT,
     LANDING_DOCUMENT,
     OFFLINE_DOCUMENT,
-    "/static/css/app.css",
-    "/static/js/app.js",
-    "/static/manifest.webmanifest",
+    APP_CSS,
+    APP_JS,
+    MANIFEST,
     "/static/icons/icon-192.png",
     "/static/icons/icon-512.png",
     "/static/icons/icon-maskable-512.png",
@@ -18,12 +26,33 @@ const CORE_ASSETS = [
 ];
 
 const OPTIONAL_ASSETS = [
-    "/static/css/landing.css",
-    "/static/js/landing.js",
-    "/static/images/app-preview.png",
+    LANDING_CSS,
+    LANDING_JS,
+    APP_PREVIEW,
     "/static/images/landing-mother-window.png",
     "/static/images/landing-mother-phone.png",
 ];
+
+
+async function freshFetch(url) {
+    const response = await fetch(url, { cache: "reload" });
+
+    if (!response || !response.ok) {
+        throw new Error(`Could not cache ${url}`);
+    }
+
+    return response;
+}
+
+
+async function precacheFresh(cache, urls) {
+    await Promise.all(
+        urls.map(async url => {
+            const response = await freshFetch(url);
+            await cache.put(url, response.clone());
+        })
+    );
+}
 
 
 async function seedAliases(cache) {
@@ -52,11 +81,14 @@ self.addEventListener("install", event => {
         (async () => {
             const cache = await caches.open(CACHE_NAME);
 
-            await cache.addAll(CORE_ASSETS);
+            await precacheFresh(cache, CORE_ASSETS);
             await seedAliases(cache);
 
             await Promise.allSettled(
-                OPTIONAL_ASSETS.map(asset => cache.add(asset))
+                OPTIONAL_ASSETS.map(async asset => {
+                    const response = await freshFetch(asset);
+                    await cache.put(asset, response.clone());
+                })
             );
 
             await self.skipWaiting();
@@ -72,9 +104,13 @@ self.addEventListener("activate", event => {
 
             await Promise.all(
                 keys
-                    .filter(key => key !== CACHE_NAME)
+                    .filter(key => key.startsWith("bumpmarks-") && key !== CACHE_NAME)
                     .map(key => caches.delete(key))
             );
+
+            if (self.registration.navigationPreload) {
+                await self.registration.navigationPreload.enable();
+            }
 
             await self.clients.claim();
         })()
@@ -89,28 +125,64 @@ self.addEventListener("message", event => {
 });
 
 
-async function cacheNetworkResponse(request, response) {
+async function cacheResponse(cacheKey, response) {
     if (!response || !response.ok) {
         return response;
     }
 
     const cache = await caches.open(CACHE_NAME);
-    await cache.put(request, response.clone());
+    await cache.put(cacheKey, response.clone());
     return response;
 }
 
 
-async function networkFirstNavigation(request, fallbackUrl) {
+async function networkFirstNavigation(event, canonicalUrl) {
     try {
-        const response = await fetch(request);
-        return await cacheNetworkResponse(request, response);
+        const preload = await event.preloadResponse;
+        const response = preload || await fetch(event.request, { cache: "no-store" });
+
+        if (response && response.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put(event.request, response.clone());
+            await cache.put(canonicalUrl, response.clone());
+            return response;
+        }
+    } catch (error) {
+        // Fall through to the local app shell.
+    }
+
+    return (
+        await caches.match(event.request) ||
+        await caches.match(canonicalUrl) ||
+        await caches.match(OFFLINE_DOCUMENT)
+    );
+}
+
+
+async function networkFirstAsset(request) {
+    try {
+        const response = await fetch(request, { cache: "no-store" });
+        return await cacheResponse(request, response);
     } catch (error) {
         return (
             await caches.match(request) ||
-            await caches.match(fallbackUrl) ||
-            await caches.match(OFFLINE_DOCUMENT)
+            await caches.match(request, { ignoreSearch: true })
         );
     }
+}
+
+
+async function cacheFirstAsset(request) {
+    const cached =
+        await caches.match(request) ||
+        await caches.match(request, { ignoreSearch: true });
+
+    if (cached) {
+        return cached;
+    }
+
+    const response = await fetch(request);
+    return await cacheResponse(request, response);
 }
 
 
@@ -132,53 +204,35 @@ self.addEventListener("fetch", event => {
             requestUrl.pathname.startsWith("/app/")
         ) {
             event.respondWith(
-                (async () => {
-                    const cachedApp =
-                        await caches.match(APP_DOCUMENT) ||
-                        await caches.match("/app") ||
-                        await caches.match("/app/");
-
-                    if (cachedApp) {
-                        return cachedApp;
-                    }
-
-                    return networkFirstNavigation(
-                        event.request,
-                        OFFLINE_DOCUMENT
-                    );
-                })()
+                networkFirstNavigation(event, APP_DOCUMENT)
             );
             return;
         }
 
-        if (requestUrl.pathname === "/" || requestUrl.pathname === "/index.html") {
+        if (
+            requestUrl.pathname === "/" ||
+            requestUrl.pathname === "/index.html"
+        ) {
             event.respondWith(
-                networkFirstNavigation(
-                    event.request,
-                    LANDING_DOCUMENT
-                )
+                networkFirstNavigation(event, LANDING_DOCUMENT)
             );
             return;
         }
 
         event.respondWith(
-            networkFirstNavigation(
-                event.request,
-                OFFLINE_DOCUMENT
-            )
+            networkFirstNavigation(event, OFFLINE_DOCUMENT)
         );
         return;
     }
 
-    event.respondWith(
-        caches.match(event.request).then(cached => {
-            if (cached) {
-                return cached;
-            }
+    if (
+        event.request.destination === "script" ||
+        event.request.destination === "style" ||
+        event.request.destination === "manifest"
+    ) {
+        event.respondWith(networkFirstAsset(event.request));
+        return;
+    }
 
-            return fetch(event.request).then(response =>
-                cacheNetworkResponse(event.request, response)
-            );
-        })
-    );
+    event.respondWith(cacheFirstAsset(event.request));
 });

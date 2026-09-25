@@ -12,10 +12,10 @@
 
     <title>BumpMarks</title>
 
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}?v=bm008c">
     <link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=bm008c">
 </head>
 <body>
 
@@ -50,6 +50,11 @@
 
 
     <section id="storage-warning" class="storage-warning" role="alert" hidden></section>
+
+    <section id="connection-banner" class="connection-banner" role="status" aria-live="polite" hidden>
+        <strong>Offline</strong>
+        <span>Entries and navigation still work on this device.</span>
+    </section>
 
     <section id="today-view" class="app-view">
         <section class="today-card">
@@ -550,9 +555,8 @@
 
     <button id="nav-history" class="nav-button" type="button" data-view="history">
         <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M4 11a8 8 0 1 0 2.3-5.7"></path>
-            <path d="M4 4v5h5"></path>
-            <path d="M12 7v5l3 2"></path>
+            <circle cx="12" cy="12" r="8.5"></circle>
+            <path d="M12 7.5v5l3.25 2"></path>
         </svg>
         <span class="nav-label">History</span>
     </button>
@@ -757,6 +761,6 @@
     </section>
 </div>
 
-<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}?v=bm008c"></script>
 </body>
 </html>

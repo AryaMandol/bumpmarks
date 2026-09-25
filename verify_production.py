@@ -85,9 +85,9 @@ def main() -> None:
         fail(f"Unexpected health response: {health}")
 
     _, status, sw_headers, sw_body = fetch(base_url, "/sw.js")
-    if status != 200 or b'bumpmarks-v13' not in sw_body:
+    if status != 200 or b'bumpmarks-v14' not in sw_body:
         fail("Service worker verification failed or old worker is still deployed")
-    if b'/app/index.html' not in sw_body or b'self.skipWaiting' not in sw_body:
+    if b'/app/index.html' not in sw_body or b'self.skipWaiting' not in sw_body or b'networkFirstNavigation' not in sw_body:
         fail("Production service worker is missing the offline app-shell fix")
 
     cache_control = sw_headers.get("Cache-Control", "")
@@ -97,6 +97,10 @@ def main() -> None:
     worker_scope = sw_headers.get("Service-Worker-Allowed", "")
     if worker_scope.strip() != "/":
         fail(f"Unexpected service-worker scope header: {worker_scope!r}")
+
+    _, status, _, preview_body = fetch(base_url, "/static/images/app-preview.png")
+    if status != 200 or len(preview_body) < 10000:
+        fail("App preview image is missing or unexpectedly small")
 
     _, status, _, manifest_body = fetch(base_url, "/static/manifest.webmanifest")
     if status != 200:
