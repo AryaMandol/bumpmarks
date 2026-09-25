@@ -72,6 +72,16 @@ def main() -> None:
     if status != 200 or b'id="movement-button"' not in physical_app_body:
         fail("Canonical /app/index.html is not directly available")
 
+    for path, marker in [
+        ("/privacy", b"Privacy Policy"),
+        ("/terms", b"Terms of Use"),
+        ("/refund-policy", b"Refund and Cancellation Policy"),
+        ("/contact", b"Contact BumpMarks"),
+    ]:
+        _, status, _, policy_body = fetch(base_url, path)
+        if status != 200 or marker not in policy_body:
+            fail(f"Policy page verification failed: {path}")
+
     _, status, _, offline_body = fetch(base_url, "/offline/index.html")
     if status != 200 or b"BumpMarks is offline" not in offline_body:
         fail("Canonical offline document is not directly available")
@@ -110,7 +120,7 @@ def main() -> None:
         fail(f"Unexpected health response: {health}")
 
     _, status, sw_headers, sw_body = fetch(base_url, "/sw.js")
-    if status != 200 or b'bumpmarks-v14' not in sw_body:
+    if status != 200 or b'bumpmarks-v15' not in sw_body:
         fail("Service worker verification failed or old worker is still deployed")
     if b'/app/index.html' not in sw_body or b'self.skipWaiting' not in sw_body or b'networkFirstNavigation' not in sw_body:
         fail("Production service worker is missing the offline app-shell fix")

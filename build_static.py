@@ -82,6 +82,10 @@ def main() -> None:
 
     write_html("index.html", "landing.html")
     write_html("app/index.html", "index.html")
+    write_html("privacy/index.html", "privacy.html")
+    write_html("terms/index.html", "terms.html")
+    write_html("refund-policy/index.html", "refund-policy.html")
+    write_html("contact/index.html", "contact.html")
     write_html("offline/index.html", "offline.html")
     write_html("404.html", "404.html")
 

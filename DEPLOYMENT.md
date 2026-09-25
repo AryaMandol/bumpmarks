@@ -59,6 +59,10 @@ Render manages HTTPS certificates for the custom domain.
 
 - `/` - public landing page
 - `/app` - BumpMarks tracker
+- `/privacy` - Privacy Policy
+- `/terms` - Terms of Use
+- `/refund-policy` - Refund and Cancellation Policy
+- `/contact` - public product/payment support contact
 - `/offline` - offline fallback
 - `/healthz` - static release health/version response
 - `/sw.js` - service worker

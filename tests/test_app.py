@@ -270,7 +270,7 @@ def test_update_banner_is_present():
 def test_service_worker_has_offline_and_update_handling():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v14";' in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v15";' in service_worker
     assert '"/offline"' in service_worker
     assert 'event.request.mode === "navigate"' in service_worker
     assert '"SKIP_WAITING"' in service_worker
@@ -597,7 +597,7 @@ def test_landing_page_registers_service_worker_and_manifest():
 def test_service_worker_precaches_canonical_app_documents():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v14";' in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v15";' in service_worker
     assert 'const APP_DOCUMENT = "/app/index.html";' in service_worker
     assert 'const OFFLINE_DOCUMENT = "/offline/index.html";' in service_worker
     assert 'cache.put("/app", appDocument.clone())' in service_worker
@@ -648,7 +648,7 @@ def test_tracking_window_uses_explicit_twelve_hour_labels():
 def test_release_verifier_checks_offline_worker_contract():
     verifier = (ROOT / "verify_release.py").read_text(encoding="utf-8")
 
-    assert 'bumpmarks-v14' in verifier
+    assert 'bumpmarks-v15' in verifier
     assert '/app/index.html' in verifier
     assert 'self.skipWaiting()' in verifier
     assert 'self.clients.claim()' in verifier
@@ -659,7 +659,7 @@ def test_production_verifier_checks_canonical_offline_documents():
 
     assert 'fetch(base_url, "/app/index.html")' in verifier
     assert 'fetch(base_url, "/offline/index.html")' in verifier
-    assert 'bumpmarks-v14' in verifier
+    assert 'bumpmarks-v15' in verifier
 
 
 def test_render_blueprint_allows_root_service_worker_scope():
@@ -686,7 +686,7 @@ def test_app_assets_are_revisioned_to_break_stale_pwa_cache():
 def test_service_worker_uses_network_first_for_app_and_code_assets():
     service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
 
-    assert 'const CACHE_NAME = "bumpmarks-v14";' in service_worker
+    assert 'const CACHE_NAME = "bumpmarks-v15";' in service_worker
     assert "networkFirstNavigation(event, APP_DOCUMENT)" in service_worker
     assert "networkFirstAsset(event.request)" in service_worker
     assert 'fetch(event.request, { cache: "no-store" })' in service_worker
@@ -765,3 +765,92 @@ def test_render_does_not_cache_deployment_metadata():
     assert "path: /version.json" in blueprint
     assert "path: /healthz.json" in blueprint
     assert 'value: "no-cache, no-store, must-revalidate"' in blueprint
+
+def test_cashfree_compliance_pages_load():
+    client = app.test_client()
+
+    checks = {
+        "/privacy": b"Privacy Policy",
+        "/terms": b"Terms of Use",
+        "/refund-policy": b"Refund and Cancellation Policy",
+        "/contact": b"Contact BumpMarks",
+    }
+
+    for path, marker in checks.items():
+        response = client.get(path)
+        assert response.status_code == 200
+        assert marker in response.data
+
+
+def test_public_contact_details_are_present_for_payment_review():
+    client = app.test_client()
+
+    response = client.get("/contact")
+
+    assert b"aryamondal723@gmail.com" in response.data
+    assert b"+91 99036 45467" in response.data
+    assert b"Arya Mandol" in response.data
+
+
+def test_landing_footer_links_all_policy_pages():
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert b'href="/privacy"' in response.data
+    assert b'href="/terms"' in response.data
+    assert b'href="/refund-policy"' in response.data
+    assert b'href="/contact"' in response.data
+
+
+def test_app_settings_links_policy_pages():
+    client = app.test_client()
+
+    response = client.get("/app")
+
+    assert b'class="app-legal-links"' in response.data
+    assert b"Privacy Policy" in response.data
+    assert b"Refund &amp; Cancellation" in response.data
+
+
+def test_static_builder_emits_policy_pages():
+    builder = (ROOT / "build_static.py").read_text(encoding="utf-8")
+
+    assert 'write_html("privacy/index.html", "privacy.html")' in builder
+    assert 'write_html("terms/index.html", "terms.html")' in builder
+    assert 'write_html("refund-policy/index.html", "refund-policy.html")' in builder
+    assert 'write_html("contact/index.html", "contact.html")' in builder
+
+
+def test_render_blueprint_routes_policy_pages():
+    blueprint = (ROOT / "render.yaml").read_text(encoding="utf-8")
+
+    assert "source: /privacy" in blueprint
+    assert "destination: /privacy/index.html" in blueprint
+    assert "source: /terms" in blueprint
+    assert "source: /refund-policy" in blueprint
+    assert "source: /contact" in blueprint
+
+
+def test_service_worker_precaches_policy_pages_for_offline_access():
+    service_worker = (ROOT / "static" / "sw.js").read_text(encoding="utf-8")
+
+    assert 'const CACHE_NAME = "bumpmarks-v15";' in service_worker
+    assert 'const PRIVACY_DOCUMENT = "/privacy/index.html";' in service_worker
+    assert 'const TERMS_DOCUMENT = "/terms/index.html";' in service_worker
+    assert 'const REFUND_DOCUMENT = "/refund-policy/index.html";' in service_worker
+    assert 'const CONTACT_DOCUMENT = "/contact/index.html";' in service_worker
+    assert '"/refund-policy": REFUND_DOCUMENT' in service_worker
+
+
+def test_policy_content_matches_bumpmarks_product_model():
+    privacy = (ROOT / "templates" / "privacy.html").read_text(encoding="utf-8")
+    terms = (ROOT / "templates" / "terms.html").read_text(encoding="utf-8")
+    refund = (ROOT / "templates" / "refund-policy.html").read_text(encoding="utf-8")
+
+    assert "browser's local storage" in privacy
+    assert "Movement records, notes, settings and doctor instructions are stored in your browser by default" in privacy
+    assert "does not require an account or sign-in" in privacy
+    assert "does not provide medical advice" in terms
+    assert "Support payments are generally non-refundable" in refund
+    assert "within 7 calendar days" in refund

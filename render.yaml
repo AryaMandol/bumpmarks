@@ -12,6 +12,18 @@ services:
         source: /app
         destination: /app/index.html
       - type: rewrite
+        source: /privacy
+        destination: /privacy/index.html
+      - type: rewrite
+        source: /terms
+        destination: /terms/index.html
+      - type: rewrite
+        source: /refund-policy
+        destination: /refund-policy/index.html
+      - type: rewrite
+        source: /contact
+        destination: /contact/index.html
+      - type: rewrite
         source: /offline
         destination: /offline/index.html
       - type: rewrite
@@ -44,6 +56,18 @@ services:
         name: Cache-Control
         value: "no-cache, must-revalidate"
       - path: /index.html
+        name: Cache-Control
+        value: "no-cache, must-revalidate"
+      - path: /privacy/index.html
+        name: Cache-Control
+        value: "no-cache, must-revalidate"
+      - path: /terms/index.html
+        name: Cache-Control
+        value: "no-cache, must-revalidate"
+      - path: /refund-policy/index.html
+        name: Cache-Control
+        value: "no-cache, must-revalidate"
+      - path: /contact/index.html
         name: Cache-Control
         value: "no-cache, must-revalidate"
       - path: /static/js/*

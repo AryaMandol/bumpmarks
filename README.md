@@ -260,3 +260,14 @@ version and exact source commit used for that deployment.
 Render is configured to deploy every commit pushed to `main`. The local
 `verify_production.cmd` command compares the live revision with the current
 Git `HEAD` so stale deployments can be detected directly.
+
+## Public policies and support
+
+BumpMarks publishes the following public pages for product transparency and payment-provider review:
+
+- `/privacy` - Privacy Policy
+- `/terms` - Terms of Use
+- `/refund-policy` - Refund and Cancellation Policy for optional support payments
+- `/contact` - Product, payment and refund support contact information
+
+The hosted app remains free to use. Optional support payments, when enabled, do not purchase medical care, clinical monitoring or a subscription to the core tracker.

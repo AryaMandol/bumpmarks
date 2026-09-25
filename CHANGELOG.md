@@ -57,3 +57,10 @@ All notable changes to BumpMarks are documented here.
 - Static builds are stamped with the exact source Git revision.
 - Added `build-info.json` for deployment identity checks.
 - Production verification now rejects stale Render deployments.
+
+### Website policy and payment-readiness
+
+- Added Cashfree-ready public policy pages for privacy, terms, refund/cancellation and contact.
+- Added visible legal/support links to the landing page and app Settings.
+- Added offline caching and Render routes for the policy pages.
+- Production verification now checks that all four public policy pages are live.

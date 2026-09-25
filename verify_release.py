@@ -53,6 +53,11 @@ def main() -> None:
         "templates/landing.html",
         "templates/index.html",
         "templates/offline.html",
+        "templates/privacy.html",
+        "templates/terms.html",
+        "templates/refund-policy.html",
+        "templates/contact.html",
+        "static/css/legal.css",
         "static/sw.js",
         "static/manifest.webmanifest",
         "static/images/landing-mother-window.png",
@@ -80,7 +85,7 @@ def main() -> None:
 
     service_worker = text(ROOT / "static/sw.js")
     require(
-        'const CACHE_NAME = "bumpmarks-v14";' in service_worker,
+        'const CACHE_NAME = "bumpmarks-v15";' in service_worker,
         "Unexpected service-worker cache version",
     )
     require(
@@ -117,6 +122,13 @@ def main() -> None:
     landing_html = text(ROOT / "templates/landing.html")
     require("No cloud requirement" in landing_html, "Landing privacy statement missing")
     require("No AI health analysis" in landing_html, "Landing AI safety statement missing")
+    for path in ["/privacy", "/terms", "/refund-policy", "/contact"]:
+        require(f'href="{path}"' in landing_html, f"Landing footer missing {path}")
+
+    for template_name in ["privacy.html", "terms.html", "refund-policy.html", "contact.html"]:
+        legal_html = text(ROOT / "templates" / template_name)
+        require("Last updated: 25 September 2026" in legal_html, f"{template_name} missing updated date")
+        require("aryamondal723@gmail.com" in legal_html, f"{template_name} missing support email")
 
     if not args.skip_build:
         subprocess.run([sys.executable, "build_static.py"], cwd=ROOT, check=True)
@@ -124,6 +136,10 @@ def main() -> None:
     required_dist = [
         "index.html",
         "app/index.html",
+        "privacy/index.html",
+        "terms/index.html",
+        "refund-policy/index.html",
+        "contact/index.html",
         "offline/index.html",
         "404.html",
         "sw.js",

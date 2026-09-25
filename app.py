@@ -43,6 +43,30 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/privacy")
+@app.route("/privacy/")
+def privacy():
+    return render_template("privacy.html")
+
+
+@app.route("/terms")
+@app.route("/terms/")
+def terms():
+    return render_template("terms.html")
+
+
+@app.route("/refund-policy")
+@app.route("/refund-policy/")
+def refund_policy():
+    return render_template("refund-policy.html")
+
+
+@app.route("/contact")
+@app.route("/contact/")
+def contact():
+    return render_template("contact.html")
+
+
 @app.route("/offline")
 def offline():
     return render_template("offline.html")

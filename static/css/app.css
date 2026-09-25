@@ -1945,3 +1945,4 @@ button {
         padding-right: 4px;
     }
 }
+\n\n.app-legal-links {\n    display: grid;\n    grid-template-columns: 1fr 1fr;\n    gap: 8px;\n    margin-top: 15px;\n}\n\n.app-legal-links a {\n    min-height: 44px;\n    display: flex;\n    align-items: center;\n    padding: 10px 12px;\n    border: 1px solid var(--border);\n    border-radius: 12px;\n    background: #f8faff;\n    color: var(--primary);\n    font-size: 12px;\n    font-weight: 700;\n    text-decoration: none;\n}\n\n.app-legal-links a:active {\n    background: var(--primary-soft);\n}\n\n@media (max-width: 380px) {\n    .app-legal-links {\n        grid-template-columns: 1fr;\n    }\n}\n
