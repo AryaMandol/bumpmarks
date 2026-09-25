@@ -36,6 +36,10 @@ def fetch(base_url: str, path: str):
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("base_url", help="Live BumpMarks base URL, including https://")
+    parser.add_argument(
+        "--expected-revision",
+        help="Expected full Git commit SHA for the live deployment",
+    )
     args = parser.parse_args()
 
     base_url = args.base_url.strip()
@@ -71,6 +75,27 @@ def main() -> None:
     _, status, _, offline_body = fetch(base_url, "/offline/index.html")
     if status != 200 or b"BumpMarks is offline" not in offline_body:
         fail("Canonical offline document is not directly available")
+
+    _, status, _, build_info_body = fetch(base_url, "/build-info.json")
+    if status != 200:
+        fail("Build-info endpoint did not return 200")
+
+    try:
+        build_info = json.loads(build_info_body.decode("utf-8"))
+    except json.JSONDecodeError as exc:
+        fail(f"Build-info endpoint returned invalid JSON: {exc}")
+
+    live_revision = str(build_info.get("revision", "")).strip()
+    if not live_revision:
+        fail("Build-info endpoint does not contain a revision")
+
+    if args.expected_revision:
+        expected_revision = args.expected_revision.strip()
+        if live_revision != expected_revision:
+            fail(
+                "Render is serving a different commit. "
+                f"Expected {expected_revision}, live is {live_revision}"
+            )
 
     _, status, _, health_body = fetch(base_url, "/healthz")
     if status != 200:
@@ -110,7 +135,10 @@ def main() -> None:
     if manifest.get("start_url") != "/app":
         fail("Production manifest does not start at /app")
 
-    print(f"BumpMarks {VERSION} production verification passed: {root_url}")
+    print(
+        f"BumpMarks {VERSION} production verification passed: {root_url}\n"
+        f"Live revision: {live_revision}"
+    )
 
 
 if __name__ == "__main__":

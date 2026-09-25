@@ -561,7 +561,7 @@ def test_static_build_configuration_is_present():
 
     assert "runtime: static" in blueprint
     assert "staticPublishPath: ./dist" in blueprint
-    assert "autoDeployTrigger: checksPass" in blueprint
+    assert "autoDeployTrigger: commit" in blueprint
     assert "source: /app" in blueprint
     assert "destination: /app/index.html" in blueprint
 
@@ -728,3 +728,40 @@ def test_render_disables_strong_cache_for_app_code():
     assert "path: /static/css/*" in blueprint
     assert "path: /app/index.html" in blueprint
     assert 'value: "no-cache, must-revalidate"' in blueprint
+
+
+def test_render_deploys_every_main_commit():
+    blueprint = (ROOT / "render.yaml").read_text(encoding="utf-8")
+
+    assert "autoDeployTrigger: commit" in blueprint
+    assert "autoDeployTrigger: checksPass" not in blueprint
+
+
+def test_static_build_stamps_render_git_revision():
+    builder = (ROOT / "build_static.py").read_text(encoding="utf-8")
+
+    assert "RENDER_GIT_COMMIT" in builder
+    assert "GITHUB_SHA" in builder
+    assert "BUILD_REVISION" in builder
+    assert "build-info.json" in builder
+    assert "ASSET_REV_RE" in builder
+
+
+def test_production_verifier_detects_stale_render_commit():
+    verifier = (ROOT / "verify_production.py").read_text(encoding="utf-8")
+    command = (ROOT / "verify_production.cmd").read_text(encoding="utf-8")
+
+    assert "--expected-revision" in verifier
+    assert 'fetch(base_url, "/build-info.json")' in verifier
+    assert "Render is serving a different commit" in verifier
+    assert "git rev-parse HEAD" in command
+    assert "--expected-revision" in command
+
+
+def test_render_does_not_cache_deployment_metadata():
+    blueprint = (ROOT / "render.yaml").read_text(encoding="utf-8")
+
+    assert "path: /build-info.json" in blueprint
+    assert "path: /version.json" in blueprint
+    assert "path: /healthz.json" in blueprint
+    assert 'value: "no-cache, no-store, must-revalidate"' in blueprint

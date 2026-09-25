@@ -29,8 +29,12 @@ The script reads the existing `origin` remote and opens Render's Blueprint
 deployment page for that repository. Review the Blueprint and approve the
 initial deployment.
 
-After that initial authorization, Render can deploy `main` only after GitHub
-checks pass.
+After the initial authorization, every commit pushed to `main` triggers a
+Render deployment. GitHub CI still runs independently as a regression check.
+
+Each production build writes `build-info.json` with the exact Git commit SHA
+used by Render. `verify_production.cmd` compares that live SHA with the current
+local `HEAD`, so a stale Render deployment is detected explicitly.
 
 After Render reports the deploy as live, verify the production site with:
 
@@ -90,3 +94,23 @@ After deploying a service-worker change:
 Do not clear site storage while testing. Clearing site storage can remove locally stored movement records.
 
 `verify_production.cmd <https-url>` checks that the canonical `/app/index.html` and `/offline/index.html` documents, current service worker, root worker scope, manifest, and security headers are present on the live Render deployment.
+
+
+## If Render is serving an older commit
+
+Open the Static Site in Render and choose:
+
+`Manual Deploy` -> `Clear build cache & deploy`
+
+Use this once after changing deployment or cache configuration. Render then
+builds the latest commit from the linked branch without reusing old build
+artifacts.
+
+After it becomes Live, run:
+
+```cmd
+verify_production.cmd https://your-live-domain
+```
+
+The command fails if the live `build-info.json` revision does not match the
+current local Git commit.

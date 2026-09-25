@@ -4,7 +4,7 @@ services:
     name: bumpmarks-pwa
     buildCommand: python build_static.py && python verify_release.py --skip-build
     staticPublishPath: ./dist
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: commit
     pullRequestPreviewsEnabled: true
 
     routes:
@@ -58,6 +58,15 @@ services:
       - path: /sw.js
         name: Service-Worker-Allowed
         value: "/"
+      - path: /build-info.json
+        name: Cache-Control
+        value: "no-cache, no-store, must-revalidate"
+      - path: /version.json
+        name: Cache-Control
+        value: "no-cache, no-store, must-revalidate"
+      - path: /healthz.json
+        name: Cache-Control
+        value: "no-cache, no-store, must-revalidate"
       - path: /static/images/*
         name: Cache-Control
         value: "public, max-age=86400"

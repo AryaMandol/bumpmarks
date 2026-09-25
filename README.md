@@ -250,3 +250,13 @@ The first public release is version `1.0.0`.
 ## Production hotfix BM-008C
 
 BM-008C makes application navigations and JavaScript/CSS network-first while online, with cached fallbacks offline. Critical assets are revisioned so an installed PWA cannot remain pinned to an older interface after deployment. The mobile bottom navigation and small-screen layout are also hardened.
+
+
+## Production deployment identity
+
+Production static builds expose `/build-info.json`, containing the BumpMarks
+version and exact source commit used for that deployment.
+
+Render is configured to deploy every commit pushed to `main`. The local
+`verify_production.cmd` command compares the live revision with the current
+Git `HEAD` so stale deployments can be detected directly.

@@ -17,7 +17,7 @@ if errorlevel 1 exit /b 1
 if not "%~1"=="" (
     echo.
     echo Verifying production URL before release...
-    python verify_production.py "%~1"
+    call verify_production.cmd "%~1"
     if errorlevel 1 exit /b 1
 )
 

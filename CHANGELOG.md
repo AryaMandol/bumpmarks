@@ -49,3 +49,11 @@ All notable changes to BumpMarks are documented here.
 - Add explicit offline-state messaging while preserving local actions.
 - Normalize five-tab mobile navigation geometry and small-screen layouts.
 - Replace the placeholder product screenshot with a real application capture.
+
+
+### Deployment reliability
+
+- Render deployment synchronization now triggers on every `main` commit.
+- Static builds are stamped with the exact source Git revision.
+- Added `build-info.json` for deployment identity checks.
+- Production verification now rejects stale Render deployments.

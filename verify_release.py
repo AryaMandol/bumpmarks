@@ -129,6 +129,7 @@ def main() -> None:
         "sw.js",
         "healthz.json",
         "version.json",
+        "build-info.json",
         "robots.txt",
         "static/css/app.css",
         "static/css/landing.css",
@@ -150,6 +151,23 @@ def main() -> None:
     health = json.loads(text(DIST / "healthz.json"))
     require(health.get("status") == "ok", "healthz status is not ok")
     require(health.get("version") == version, "healthz version mismatch")
+
+    build_info = json.loads(text(DIST / "build-info.json"))
+    require(build_info.get("version") == version, "build-info version mismatch")
+    revision = str(build_info.get("revision", "")).strip()
+    require(bool(revision), "build-info revision is missing")
+
+    built_app = text(DIST / "app/index.html")
+    require(
+        f"?v={revision}" in built_app,
+        "Built app assets are not stamped with the build revision",
+    )
+
+    built_worker = text(DIST / "sw.js")
+    require(
+        f'const ASSET_REV = "{revision}";' in built_worker,
+        "Built service worker revision does not match build-info",
+    )
 
     node = shutil.which("node")
     if node:
